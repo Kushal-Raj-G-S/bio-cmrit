@@ -25,6 +25,61 @@ interface VideoPlayerProps {
   className?: string
 }
 
+type YouTubeRef = {
+  videoId?: string
+  playlistId?: string
+}
+
+function parseYouTubeRef(rawUrl: string): YouTubeRef | null {
+  try {
+    const url = new URL(rawUrl)
+    const host = url.hostname.toLowerCase()
+
+    if (host.includes("youtu.be")) {
+      const id = url.pathname.replace("/", "").trim()
+      const list = url.searchParams.get("list") || undefined
+      return id ? { videoId: id, playlistId: list } : null
+    }
+
+    if (host.includes("youtube.com")) {
+      const path = url.pathname
+      const list = url.searchParams.get("list") || undefined
+
+      if (path === "/watch") {
+        const id = url.searchParams.get("v") || undefined
+        return id || list ? { videoId: id, playlistId: list } : null
+      }
+
+      if (path === "/playlist") {
+        return list ? { playlistId: list } : null
+      }
+
+      if (path.startsWith("/embed/")) {
+        const id = path.split("/embed/")[1]?.split("/")[0]
+        return id || list ? { videoId: id, playlistId: list } : null
+      }
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+function buildYouTubeEmbedUrl(ref: YouTubeRef): string {
+  const commonParams = "rel=0&modestbranding=1&fs=1&playsinline=1"
+
+  if (ref.playlistId && !ref.videoId) {
+    return `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(ref.playlistId)}&${commonParams}`
+  }
+
+  if (ref.videoId && ref.playlistId) {
+    return `https://www.youtube.com/embed/${encodeURIComponent(ref.videoId)}?list=${encodeURIComponent(ref.playlistId)}&${commonParams}`
+  }
+
+  return `https://www.youtube.com/embed/${encodeURIComponent(ref.videoId || "")}?${commonParams}`
+}
+
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoUrl,
   title,
@@ -41,6 +96,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [playbackRate, setPlaybackRate] = useState(1)
   const [showControls, setShowControls] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const youtubeRef = parseYouTubeRef(videoUrl)
+  const isYouTube = !!youtubeRef
 
   useEffect(() => {
     const video = videoRef.current
@@ -128,6 +185,24 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
   return (
     <Card className={`relative bg-black rounded-lg overflow-hidden ${className}`}>
       <CardContent className="p-0">
+        {isYouTube ? (
+          <div className="relative">
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                key={buildYouTubeEmbedUrl(youtubeRef)}
+                className="w-full h-full"
+                src={buildYouTubeEmbedUrl(youtubeRef)}
+                title={title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+            <div className="absolute left-3 top-3 px-3 py-1 rounded-md bg-black/60 text-white text-sm font-medium backdrop-blur-sm">
+              {title}
+            </div>
+          </div>
+        ) : (
         <div 
           className="relative group"
           onMouseEnter={() => setShowControls(true)}
@@ -283,6 +358,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
             </div>
           </motion.div>
         </div>
+        )}
       </CardContent>
     </Card>
   )

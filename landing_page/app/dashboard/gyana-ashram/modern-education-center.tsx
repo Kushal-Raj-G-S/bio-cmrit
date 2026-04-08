@@ -10,7 +10,8 @@ import { DashboardStats, GamificationSection, AIRecommendations, CertificationBa
 import { LearningPaths } from './learning-paths'
 import { AdaptiveCommunityHub } from './community/AdaptiveCommunityHub'
 import { MobileLearningCompanion } from './mobile-learning'
-import { ErrorBoundary, courses, type Course } from './shared'
+import { ErrorBoundary, type Course } from './shared'
+import { farmerVideoCatalog } from './shared/farmer-video-catalog'
 import { 
   BookOpen, 
   Award, 
@@ -83,6 +84,23 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false)
+
+  const catalogCourses: Course[] = farmerVideoCatalog.map((item) => ({
+    id: item.id,
+    title: item.title,
+    description: item.whatItTeaches,
+    thumbnail: item.thumbnailUrl,
+    duration: Math.round(item.durationMinutes / 60),
+    difficulty: item.difficulty,
+    rating: item.rating,
+    students: item.learners,
+    progress: 0,
+    category: item.type === 'playlist' ? 'Regional Playlist' : 'Farmer Video',
+    isFeatured: item.featured,
+    instructor: item.channel,
+    language: item.language,
+    tags: [item.type, item.language],
+  }))
 
   // Modern Hero Section
   const HeroSection = () => (
@@ -363,6 +381,22 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
         <ModernNavigation />
         
         <div className="container mx-auto px-4 py-8 space-y-8">
+          {activeTab === 'overview' && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 p-4 sm:p-6 shadow-lg text-white">
+            <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+            <div className="relative z-10 flex items-start justify-between gap-4">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-xs font-semibold uppercase tracking-wide">
+                  <Wheat className="h-3.5 w-3.5" /> Learning Companion
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">GyanaAshram</h1>
+                <p className="text-indigo-100 text-sm font-semibold italic">Learn Daily. Apply Better Practices. Grow With Confidence.</p>
+              </div>
+            </div>
+          </div>
+          )}
+
           {/* Tab Content */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -379,17 +413,17 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
               {activeTab === 'courses' && (
                 <div className="space-y-6">
                   {selectedCourse ? (
-                    <div>
+                    <>
                       <Button 
                         variant="ghost" 
                         onClick={() => setSelectedCourse(null)}
-                        className="mb-4"
+                        className="w-fit"
                       >
                         <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
                         Back to Courses
                       </Button>
-                      <CourseDetail courseId={selectedCourse.id} />
-                    </div>
+                      <CourseDetail courseId={selectedCourse.id} onBack={() => setSelectedCourse(null)} />
+                    </>
                   ) : (
                     <>
                       <div className="flex items-center justify-between">
@@ -407,13 +441,13 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className={`grid gap-6 ${
                         viewMode === 'grid' 
                           ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                           : 'grid-cols-1'
                       }`}>
-                        {courses.map((course, index) => (
+                        {catalogCourses.map((course, index) => (
                           <motion.div
                             key={course.id}
                             initial={{ opacity: 0, y: 20 }}

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +19,14 @@ type Step = 'phone' | 'choose' | 'password' | 'otp'
 
 export default function AuthPage() {
   const router = useRouter()
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
+  
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace('/dashboard')
+    }
+  }, [isAuthenticated, authLoading, router])
+
   const [phone, setPhone] = useState("")
   const [step, setStep] = useState<Step>('phone')
   const [password, setPassword] = useState("")

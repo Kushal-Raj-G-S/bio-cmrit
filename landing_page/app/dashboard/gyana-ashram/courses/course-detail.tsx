@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Button, Progress, Tabs, TabsContent, TabsList, TabsTrigger } from '../shared/ui-components'
 import { VideoPlayer } from './video-player'
 import { placeholderImages } from '../shared/placeholder-images'
+import { farmerVideoCatalog } from '../shared/farmer-video-catalog'
 import { 
   Play, 
   Clock, 
@@ -40,77 +41,53 @@ interface CourseDetailProps {
   onBack?: () => void
 }
 
-// Mock data - replace with real data fetching
-const mockCourse = {
-  id: '1',
-  title: 'Advanced Grain Quality Control & Verification',
-  description: 'Master the art of grain quality assessment using modern techniques and traditional knowledge. Learn to identify, prevent, and solve quality issues that affect your harvest value.',
-  instructor: 'Dr. Priya Sharma',
-  instructorAvatar: placeholderImages.userAvatar('PS'),
-  rating: 4.8,
-  students: 1247,
-  duration: '8 hours',
-  level: 'Intermediate',
-  language: 'English, Hindi, Kannada',
-  category: 'Quality Control',
-  price: 'Free',
-  thumbnail: placeholderImages.courseImage('Course Thumbnail'),
-  progress: 35,
-  lessons: [
-    {
-      id: '1',
-      title: 'Introduction to Grain Quality Standards',
-      duration: 15,
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      isCompleted: true,
-      type: 'video' as const,
-      description: 'Overview of international and local grain quality standards'
-    },
-    {
-      id: '2', 
-      title: 'Visual Inspection Techniques',
-      duration: 22,
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-      isCompleted: true,
-      type: 'video' as const,
-      description: 'Learn to identify quality issues through visual examination'
-    },
-    {
-      id: '3',
-      title: 'Moisture Content Testing',
-      duration: 18,
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-      isCompleted: false,
-      type: 'video' as const,
-      description: 'Hands-on moisture testing methods and equipment usage'
-    },
-    {
-      id: '4',
-      title: 'Field Practice: Quality Assessment',
-      duration: 30,
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-      isCompleted: false,
-      type: 'assignment' as const,
-      description: 'Practical assignment to assess grain samples from your farm'
-    }
-  ],
-  tags: ['Quality Control', 'Testing', 'Standards', 'Practical Skills'],
-  requirements: [
-    'Basic understanding of farming practices',
-    'Access to grain samples for practice',
-    'Mobile device with camera for assignments'
-  ],
-  outcomes: [
-    'Identify grain quality issues accurately',
-    'Use standard testing equipment',
-    'Implement quality control measures',
-    'Document and report quality assessments'
-  ]
-}
-
 export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) => {
-  const [course] = useState(mockCourse)
-  const [currentLesson, setCurrentLesson] = useState<Lesson>(course.lessons[0])
+  const selected = farmerVideoCatalog.find((v) => v.id === courseId) || farmerVideoCatalog[0]
+  const lessons: Lesson[] = [
+    {
+      id: `${selected.id}-lesson`,
+      title: selected.title,
+      duration: selected.durationMinutes,
+      videoUrl: selected.directLink,
+      isCompleted: false,
+      type: 'video',
+      description: selected.whatItTeaches,
+    },
+  ]
+
+  const course = {
+    id: selected.id,
+    title: selected.title,
+    description: selected.whatItTeaches,
+    instructor: selected.channel,
+    instructorAvatar: placeholderImages.userAvatar('BB'),
+    rating: selected.rating,
+    students: selected.learners,
+    duration: `${selected.durationMinutes} min`,
+    level: selected.difficulty,
+    language: selected.language,
+    category: selected.type === 'playlist' ? 'Playlist' : 'Video Lesson',
+    price: 'Free',
+    thumbnail: placeholderImages.courseImage(selected.title),
+    progress: 0,
+    lessons,
+    tags: [selected.type.toUpperCase(), selected.language],
+    requirements: [
+      'Internet connection for streaming YouTube lessons',
+      'Notebook to capture key takeaways and action points',
+      'Basic context of your local crop and weather conditions',
+    ],
+    outcomes: [
+      selected.whatItTeaches,
+      'Apply this lesson to your own farm planning decisions',
+      'Build a practical action checklist from the video.',
+    ],
+  }
+
+  const [currentLesson, setCurrentLesson] = useState<Lesson>(lessons[0])
+  useEffect(() => {
+    setCurrentLesson(lessons[0])
+  }, [courseId])
   const [isEnrolled, setIsEnrolled] = useState(true)
   const [activeTab, setActiveTab] = useState('lessons')
   const [isLiked, setIsLiked] = useState(false)
@@ -156,17 +133,8 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-4 mb-6"
+          className="flex items-start justify-between gap-4 mb-6"
         >
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onBack}
-            className="hover:bg-green-100"
-          >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Courses
-          </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-green-800">{course.title}</h1>
             <p className="text-green-600">by {course.instructor}</p>
@@ -186,9 +154,9 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-3 space-y-6">
             {/* Video Player */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -250,28 +218,29 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
             >
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4 bg-white border border-green-200">
-                  <TabsTrigger value="lessons" className="data-[state=active]:bg-green-100">
+                  <TabsTrigger value="lessons" className="data-[state=active]:bg-green-100" onClick={() => setActiveTab('lessons')}>
                     <BookOpen className="w-4 h-4 mr-2" />
                     Lessons
                   </TabsTrigger>
-                  <TabsTrigger value="description" className="data-[state=active]:bg-green-100">
+                  <TabsTrigger value="description" className="data-[state=active]:bg-green-100" onClick={() => setActiveTab('description')}>
                     <FileText className="w-4 h-4 mr-2" />
                     About
                   </TabsTrigger>
-                  <TabsTrigger value="resources" className="data-[state=active]:bg-green-100">
+                  <TabsTrigger value="resources" className="data-[state=active]:bg-green-100" onClick={() => setActiveTab('resources')}>
                     <Download className="w-4 h-4 mr-2" />
                     Resources
                   </TabsTrigger>
-                  <TabsTrigger value="discussions" className="data-[state=active]:bg-green-100">
+                  <TabsTrigger value="discussions" className="data-[state=active]:bg-green-100" onClick={() => setActiveTab('discussions')}>
                     <MessageCircle className="w-4 h-4 mr-2" />
                     Discussion
                   </TabsTrigger>
                 </TabsList>
 
+                {activeTab === 'lessons' && (
                 <TabsContent value="lessons" className="mt-4">
                   <Card className="border-green-200">
                     <CardHeader>
-                      <CardTitle className="text-green-800">Course Lessons</CardTitle>
+                      <CardTitle className="text-green-800">Course Curriculum</CardTitle>
                       <CardDescription>
                         {completedLessons} of {totalLessons} lessons completed
                       </CardDescription>
@@ -310,13 +279,20 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
                     </CardContent>
                   </Card>
                 </TabsContent>
+                )}
 
+                {activeTab === 'description' && (
                 <TabsContent value="description" className="mt-4">
                   <Card className="border-green-200">
                     <CardHeader>
-                      <CardTitle className="text-green-800">Course Description</CardTitle>
+                      <CardTitle className="text-green-800">Now Watching</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                        <h4 className="font-semibold text-green-800 mb-1">{currentLesson.title}</h4>
+                        <p className="text-sm text-green-700">{currentLesson.description}</p>
+                      </div>
+
                       <p className="text-gray-700">{course.description}</p>
                       
                       <div>
@@ -345,7 +321,9 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
                     </CardContent>
                   </Card>
                 </TabsContent>
+                )}
 
+                {activeTab === 'resources' && (
                 <TabsContent value="resources" className="mt-4">
                   <Card className="border-green-200">
                     <CardHeader>
@@ -355,10 +333,10 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
                     <CardContent>
                       <div className="space-y-3">
                         {[
-                          { name: 'Grain Quality Standards Handbook', type: 'PDF', size: '2.5 MB' },
-                          { name: 'Quality Testing Checklist', type: 'PDF', size: '850 KB' },
-                          { name: 'Sample Assessment Forms', type: 'DOCX', size: '1.2 MB' },
-                          { name: 'Regional Quality Guidelines', type: 'PDF', size: '3.1 MB' }
+                          { name: 'Crop Profitability Planning Sheet', type: 'XLSX', size: '420 KB' },
+                          { name: 'Season-wise Crop Selection Checklist', type: 'PDF', size: '690 KB' },
+                          { name: 'Organic Input Planning Template', type: 'DOCX', size: '510 KB' },
+                          { name: 'Karnataka Crop Calendar Guide', type: 'PDF', size: '1.8 MB' }
                         ].map((resource, index) => (
                           <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-green-200 transition-colors">
                             <div className="flex items-center gap-3">
@@ -378,7 +356,9 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
                     </CardContent>
                   </Card>
                 </TabsContent>
+                )}
 
+                {activeTab === 'discussions' && (
                 <TabsContent value="discussions" className="mt-4">
                   <Card className="border-green-200">
                     <CardHeader>
@@ -394,6 +374,7 @@ export const CourseDetail: React.FC<CourseDetailProps> = ({ courseId, onBack }) 
                     </CardContent>
                   </Card>
                 </TabsContent>
+                )}
               </Tabs>
             </motion.div>
           </div>

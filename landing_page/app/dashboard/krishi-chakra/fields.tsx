@@ -702,13 +702,23 @@ export default function FieldsPage() {
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, {profile?.full_name || user?.email || "Farmer"}!
-        </h1>
-        <p className="text-gray-600">
-          Manage your fields and get AI-powered crop rotation recommendations
-        </p>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-600 via-emerald-600 to-lime-600 p-4 sm:p-6 shadow-lg text-white">
+        <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-2 min-w-0">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-xs font-semibold uppercase tracking-wide">
+              <Leaf className="h-3.5 w-3.5" /> AI Rotation Planner
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">KrishiChakra</h1>
+            <p className="text-emerald-100 text-sm font-semibold italic">
+              Plan Better Rotations. Protect Soil. Improve Yield Stability.
+            </p>
+          </div>
+          <div className="text-sm text-emerald-100 font-medium">
+            Welcome, {profile?.full_name || user?.email || "Farmer"}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1224,19 +1234,24 @@ export default function FieldsPage() {
           setTranslationBusy(false)
         }
       }}>
-        <DialogContent className="max-w-6xl w-[96vw] max-h-[94vh] flex flex-col p-0 gap-0 overflow-hidden">
-          <DialogTitle className="sr-only">AI Crop Plan — {aiPlanField?.name}</DialogTitle>
+          <DialogContent className="max-w-7xl w-[96vw] max-h-[94vh] flex flex-col p-0 gap-0 overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle>AI Crop Plan — {aiPlanField?.name}</DialogTitle>
+            <DialogDescription>
+              Generated three-season crop rotation plan with advisory cards, translated language options, and risk/input details.
+            </DialogDescription>
+          </DialogHeader>
 
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 shrink-0">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start md:items-center justify-between px-5 md:px-8 py-4 md:py-5 border-b border-gray-100 shrink-0 gap-4">
+            <div className="flex items-start md:items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
                 <Zap className="h-5 w-5 text-orange-500" />
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900 leading-tight">AI Crop Plan — {aiPlanField?.name}</h2>
+              <div className="min-w-0">
+                <h2 className="text-lg md:text-xl font-bold text-gray-900 leading-tight truncate">AI Crop Plan — {aiPlanField?.name}</h2>
                 {aiPlanField?.location && (
-                  <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                  <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5 break-words">
                     <MapPin className="h-3 w-3" />{aiPlanField.location}
                   </p>
                 )}
@@ -1285,13 +1300,13 @@ export default function FieldsPage() {
 
             {/* Plan content */}
             {!aiPlanLoading && displayedPlan && (
-              <div className="px-8 py-7 space-y-8">
+              <div className="px-5 md:px-8 py-6 md:py-7 space-y-8">
 
-                <section className="flex items-center justify-between gap-3 flex-wrap">
+                <section className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
                   <div className="text-xs text-gray-500 uppercase tracking-widest font-bold">Plan Language</div>
                   <div className="flex items-center gap-3">
                     <Select value={selectedPlanLanguage} onValueChange={(value: PlanLanguage) => setSelectedPlanLanguage(value)}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="w-[170px] bg-white">
                         <SelectValue placeholder="Choose language" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1319,7 +1334,7 @@ export default function FieldsPage() {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">3-Season Rotation Plan</h3>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {displayedPlan.rotation_plan.map((entry, idx) => (
                       <div key={idx} className="rounded-2xl border border-gray-100 shadow-sm overflow-hidden bg-white flex flex-col">
 
@@ -1367,22 +1382,61 @@ export default function FieldsPage() {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Field Advisory</h3>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
-                      <p className="text-[11px] font-bold text-amber-600 uppercase tracking-widest mb-2">Soil Health</p>
-                      <p className="text-sm text-amber-900 leading-6">{displayedPlan.soil_health_advisory}</p>
-                    </div>
-                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                      <p className="text-[11px] font-bold text-blue-600 uppercase tracking-widest mb-2">Water Management</p>
-                      <p className="text-sm text-blue-900 leading-6">{displayedPlan.water_management_tip}</p>
-                    </div>
-                    <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4">
-                      <p className="text-[11px] font-bold text-rose-600 uppercase tracking-widest mb-2">Pest &amp; Disease</p>
-                      <p className="text-sm text-rose-900 leading-6">{displayedPlan.pest_disease_management}</p>
-                    </div>
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                      <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Economic Outlook</p>
-                      <p className="text-sm text-emerald-900 leading-6">{displayedPlan.economic_outlook}</p>
+                  <div className="rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-slate-50/40 p-3 md:p-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
+                      {[
+                        {
+                          title: 'Soil Health',
+                          body: displayedPlan.soil_health_advisory,
+                          icon: Leaf,
+                          cardClass: 'border-amber-100 bg-amber-50/70',
+                          iconWrapClass: 'bg-amber-100 text-amber-700',
+                          titleClass: 'text-amber-700',
+                          bodyClass: 'text-amber-900'
+                        },
+                        {
+                          title: 'Water Management',
+                          body: displayedPlan.water_management_tip,
+                          icon: Calendar,
+                          cardClass: 'border-blue-100 bg-blue-50/70',
+                          iconWrapClass: 'bg-blue-100 text-blue-700',
+                          titleClass: 'text-blue-700',
+                          bodyClass: 'text-blue-900'
+                        },
+                        {
+                          title: 'Pest & Disease',
+                          body: displayedPlan.pest_disease_management,
+                          icon: AlertCircle,
+                          cardClass: 'border-rose-100 bg-rose-50/70',
+                          iconWrapClass: 'bg-rose-100 text-rose-700',
+                          titleClass: 'text-rose-700',
+                          bodyClass: 'text-rose-900'
+                        },
+                        {
+                          title: 'Economic Outlook',
+                          body: displayedPlan.economic_outlook,
+                          icon: DollarSign,
+                          cardClass: 'border-emerald-100 bg-emerald-50/70',
+                          iconWrapClass: 'bg-emerald-100 text-emerald-700',
+                          titleClass: 'text-emerald-700',
+                          bodyClass: 'text-emerald-900'
+                        }
+                      ].map((advisory) => {
+                        const Icon = advisory.icon
+                        return (
+                          <article key={advisory.title} className={`rounded-2xl border p-4 md:p-5 ${advisory.cardClass}`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 ${advisory.iconWrapClass}`}>
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className={`text-[11px] font-bold uppercase tracking-widest mb-1 ${advisory.titleClass}`}>{advisory.title}</p>
+                                <p className={`text-sm leading-7 ${advisory.bodyClass}`}>{advisory.body}</p>
+                              </div>
+                            </div>
+                          </article>
+                        )
+                      })}
                     </div>
                   </div>
                 </section>
@@ -1392,7 +1446,7 @@ export default function FieldsPage() {
           </div>
 
           {/* ── Footer ── */}
-          <div className="flex items-center justify-end gap-3 px-8 py-4 border-t border-gray-100 shrink-0 bg-white">
+          <div className="flex items-center justify-end gap-3 px-5 md:px-8 py-4 border-t border-gray-100 shrink-0 bg-white">
             <Button variant="outline" onClick={() => { setAiPlanField(null); setAiPlan(null); setAiPlanError(null) }}>
               Close
             </Button>

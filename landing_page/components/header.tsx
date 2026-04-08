@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Leaf, Menu, Globe, X, Home } from "lucide-react"
 import Image from "next/image"
 import { useTranslation } from "@/hooks/use-translation"
+import { useAuth } from "@/context/auth-context"
 
 const languages = [
   { code: "en", name: "English", native: "English" },
@@ -23,6 +24,7 @@ interface HeaderProps {
 export default function Header({ currentLanguage = "en", onLanguageChange }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { t } = useTranslation()
+  const { isAuthenticated } = useAuth()
 
   const currentLang = languages.find((lang) => lang.code === currentLanguage) || languages[0]
 
@@ -88,11 +90,19 @@ export default function Header({ currentLanguage = "en", onLanguageChange }: Hea
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link href="/auth">
-            <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hidden md:flex transition-all duration-200 hover:scale-105 hover:shadow-lg shadow-md">
-              {t("navigation.getStarted")}
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hidden md:flex transition-all duration-200 hover:scale-105 hover:shadow-lg shadow-md">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/auth">
+              <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white hidden md:flex transition-all duration-200 hover:scale-105 hover:shadow-lg shadow-md">
+                {t("navigation.getStarted")}
+              </Button>
+            </Link>
+          )}
 
           {/* Mobile Menu Button */}
           <Button
@@ -140,11 +150,19 @@ export default function Header({ currentLanguage = "en", onLanguageChange }: Hea
               {t("navigation.support")}
             </Link>
             <div className="pt-4 border-t">
-              <Link href="/auth">
-                <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white w-full transition-all duration-200 hover:scale-105 shadow-md">
-                  {t("navigation.getStarted")}
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/dashboard">
+                  <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white w-full transition-all duration-200 hover:scale-105 shadow-md">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/auth">
+                  <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white w-full transition-all duration-200 hover:scale-105 shadow-md">
+                    {t("navigation.getStarted")}
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

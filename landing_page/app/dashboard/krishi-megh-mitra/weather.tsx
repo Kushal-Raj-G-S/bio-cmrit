@@ -388,19 +388,22 @@ export default function WeatherDashboard() {
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Cloud className="w-7 h-7 text-orange-500" />
-            KrishiMeghMitra
-          </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Real-time weather intelligence for smarter farming decisions
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 p-4 sm:p-6 shadow-lg text-white">
+        <div className="absolute -top-20 -right-20 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2 min-w-0">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-xs font-semibold uppercase tracking-wide">
+              <Cloud className="h-3.5 w-3.5" /> Live Weather Intelligence
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">KrishiMeghMitra</h1>
+            <p className="text-amber-100 text-sm font-semibold italic">
+              Local Forecasts. Smarter Farm Decisions. Lower Weather Risk.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
           {lastUpdated && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-emerald-100">
               Updated {lastUpdated.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}
             </span>
           )}
@@ -409,12 +412,13 @@ export default function WeatherDashboard() {
             size="sm"
             onClick={() => gpsCoords ? fetchWeatherByCoords(gpsCoords.lat, gpsCoords.lon, city) : fetchWeather(city)}
             disabled={loading}
-            className="flex items-center gap-1.5"
+            className="flex items-center gap-1.5 border-white/30 bg-white/10 text-white hover:bg-white/20"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
+      </div>
       </div>
 
       {/* ── Search Bar ── */}

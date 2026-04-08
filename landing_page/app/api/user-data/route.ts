@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Create client inside handler so env vars are always available at call time
 function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!url || !key) throw new Error(`Missing env vars: URL=${!!url} KEY=${!!key}`)
   return createClient(url, key, { auth: { persistSession: false } })
@@ -37,11 +37,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId or phone' }, { status: 400 })
     }
 
-    const { data, error } = await adminSupabase
+    let query = adminSupabase
       .from(table)
       .select('*')
       .eq(table === 'profiles' ? 'id' : 'user_id', userId)
-      .order(table === 'field_batches' ? 'created_at' : 'id', { ascending: table !== 'field_batches' })
+
+    // Hide soft-deleted fields from normal UI fetches.
+    if (table === 'field_batches') {
+      query = query.not('status', 'eq', 'deleted')
+    }
+
+    const { data, error } = await query.order(table === 'field_batches' ? 'created_at' : 'id', { ascending: table !== 'field_batches' })
 
     if (error) {
       console.error(`[user-data] ${table} lookup error:`, error.message)
@@ -117,6 +123,29 @@ export async function DELETE(request: NextRequest) {
 
     const { error } = await adminSupabase.from(table).delete().eq('id', id)
     if (error) {
+      // Some schemas attach delete-history triggers that create FK conflicts.
+      // Fallback to soft delete so user can still remove a field from UI.
+      const msg = (error.message || '').toLowerCase()
+      const canSoftDelete = table === 'field_batches' && (
+        msg.includes('foreign key') ||
+        msg.includes('violates') ||
+        msg.includes('field_batch_history')
+      )
+
+      if (canSoftDelete) {
+        const { error: softErr } = await adminSupabase
+          .from('field_batches')
+          .update({ status: 'deleted' })
+          .eq('id', id)
+
+        if (!softErr) {
+          return NextResponse.json({ success: true, mode: 'soft-delete' })
+        }
+
+        console.error('[user-data] soft-delete fallback failed:', softErr.message)
+        return NextResponse.json({ error: softErr.message }, { status: 500 })
+      }
+
       console.error(`[user-data] DELETE ${table} error:`, error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }

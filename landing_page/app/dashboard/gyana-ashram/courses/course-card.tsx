@@ -43,6 +43,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   showProgress = true,
   size = 'md'
 }) => {
+  const formatLearners = (value: number) => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`
+    }
+    return `${value}`
+  }
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Beginner': return 'bg-green-100 text-green-800 border-green-200'
@@ -66,7 +73,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       className="group cursor-pointer"
       onClick={onClick}
     >
-      <Card className="overflow-hidden border-0 shadow-md hover:shadow-2xl transition-all duration-300 bg-white">
+      <Card className="overflow-hidden border border-emerald-100/70 shadow-md hover:shadow-2xl transition-all duration-300 bg-white/95 backdrop-blur-sm rounded-2xl">
         {/* Course Image */}
         <div className="relative">
           <div className="aspect-video bg-gradient-to-br from-green-400 to-blue-500 relative overflow-hidden">
@@ -81,7 +88,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             />
             
             {/* Overlay */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent group-hover:from-black/35 transition-colors duration-300"></div>
             
             {/* Play Button */}
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -121,46 +128,55 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                 </Badge>
               </div>
             )}
+
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+              <Badge className="bg-white/90 text-gray-800 border-0 backdrop-blur-sm max-w-[68%] truncate">
+                {course.language || 'Regional'}
+              </Badge>
+              <Badge className="bg-emerald-600/90 text-white border-0 backdrop-blur-sm">
+                {course.category || 'Course'}
+              </Badge>
+            </div>
           </div>
         </div>
 
-        <CardContent className="p-6 space-y-4">
+        <CardContent className="p-5 space-y-4">
           {/* Course Meta */}
           <div className="flex items-center justify-between text-sm text-gray-500">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 {course.duration}h
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                {course.students}
+                {formatLearners(course.students)}
               </div>
             </div>
-            <Badge variant="outline" className={getDifficultyColor(course.difficulty)}>
+            <Badge variant="outline" className={`${getDifficultyColor(course.difficulty)} font-semibold`}>
               {course.difficulty}
             </Badge>
           </div>
 
           {/* Course Title */}
           <div>
-            <h3 className="font-bold text-lg text-gray-800 line-clamp-2 group-hover:text-green-700 transition-colors">
+            <h3 className="font-bold text-lg text-gray-800 line-clamp-2 leading-snug group-hover:text-green-700 transition-colors">
               {course.title}
             </h3>
-            <p className="text-gray-600 text-sm line-clamp-2 mt-2">
+            <p className="text-gray-600 text-sm line-clamp-2 mt-2 leading-relaxed">
               {course.description}
             </p>
           </div>
 
           {/* Instructor & Rating */}
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 truncate pr-2">
               by {course.instructor || 'Expert Instructor'}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full px-2.5 py-1 shrink-0">
               <Star className="w-4 h-4 text-yellow-500 fill-current" />
               <span className="text-sm font-medium">{course.rating}</span>
-              <span className="text-xs text-gray-500">({course.students})</span>
+              <span className="text-xs text-amber-600">({formatLearners(course.students)})</span>
             </div>
           </div>
 
@@ -187,7 +203,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <Button
-              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300"
+              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 rounded-xl"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation()
                 onClick?.()
@@ -214,7 +230,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             <Button 
               variant="outline" 
               size="sm" 
-              className="px-3 hover:bg-gray-50"
+              className="px-3 hover:bg-gray-50 rounded-xl border-gray-200"
               onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <MoreHorizontal className="w-4 h-4" />
@@ -231,12 +247,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       className="group cursor-pointer"
       onClick={onClick}
     >
-      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 bg-white">
+      <Card className="overflow-hidden border border-emerald-100/70 shadow-sm hover:shadow-lg transition-all duration-300 bg-white rounded-2xl">
         <CardContent className="p-4">
           <div className="flex gap-4">
             {/* Course Thumbnail */}
             <div className="flex-shrink-0">
-              <div className="w-32 h-20 rounded-lg bg-gradient-to-br from-green-400 to-blue-500 relative overflow-hidden">
+              <div className="w-36 h-24 rounded-xl bg-gradient-to-br from-green-400 to-blue-500 relative overflow-hidden">
                 <img 
                   src={course.thumbnail || placeholderImages.courseImage(course.title)} 
                   alt={course.title}
@@ -276,7 +292,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {course.students}
+                  {formatLearners(course.students)}
                 </div>
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 text-yellow-500 fill-current" />
@@ -296,10 +312,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               )}
 
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 truncate pr-2">
                   by {course.instructor || 'Expert Instructor'}
                 </div>
-                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white rounded-xl">
                   {course.progress === 0 ? 'Start' : course.progress === 100 ? 'Review' : 'Continue'}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>

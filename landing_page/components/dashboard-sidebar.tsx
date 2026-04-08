@@ -7,13 +7,11 @@ import {
   Leaf,
   TrendingUp,
   Pill,
-  Beef,
+  Stethoscope,
   Wind,
   GraduationCap,
   ChevronLeft,
-  ChevronRight,
-  Shield,
-  Cpu
+  ChevronRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -52,13 +50,13 @@ const navigationItems = [
     color: "text-purple-600",
     bgColor: "bg-purple-100"
   },
-  //{
-    //name: "PashudhanSakhi",
-    //icon: Beef,
-    //href: "/dashboard",
-    //color: "text-orange-600",
-    //bgColor: "bg-orange-100"
-//},
+  {
+    name: "PashudhanSakhi",
+    icon: Stethoscope,
+    href: "/dashboard/pashudhansakhi",
+    color: "text-amber-700",
+    bgColor: "bg-amber-100"
+  },
   //{
   //  name: "KrishiBarosa",
   //  icon: Shield,
