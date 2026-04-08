@@ -115,6 +115,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth()
 
+    const handlePasswordAuthChanged = () => {
+      checkAuth()
+    }
+
+    const handleStorageSync = (event: StorageEvent) => {
+      if (!event.key) return
+      if (event.key === 'biobloom_password_user_id' || event.key === 'biobloom_password_auth') {
+        checkAuth()
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('biobloom-password-auth-changed', handlePasswordAuthChanged as EventListener)
+      window.addEventListener('storage', handleStorageSync)
+    }
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
@@ -175,6 +191,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       subscription.unsubscribe()
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('biobloom-password-auth-changed', handlePasswordAuthChanged as EventListener)
+        window.removeEventListener('storage', handleStorageSync)
+      }
     }
   }, [])
 

@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import threading
 import time
 
 from fastapi import APIRouter
@@ -39,7 +40,6 @@ def _translation_models(language: str) -> list[str]:
             "KRISHI_HINDI_TRANSLATION_MODELS",
             [
                 "nvidia/nemotron-4-mini-hindi-4b-instruct",
-                "meta/llama-3.3-70b-instruct",
             ],
         )
     return _csv_models(
@@ -60,9 +60,14 @@ def _prewarm_languages() -> tuple[str, ...]:
     return tuple(dict.fromkeys(valid))
 
 TRANSLATION_CACHE_TTL_S = 30 * 60
-TRANSLATION_SYNC_TIMEOUT_S = float(os.getenv("KRISHI_TRANSLATION_SYNC_TIMEOUT_S", "22"))
+TRANSLATION_SYNC_TIMEOUT_S = float(os.getenv("KRISHI_TRANSLATION_SYNC_TIMEOUT_S", "120"))
 _translation_cache: dict[str, dict[str, dict]] = {}
 _translation_tasks: dict[str, dict[str, asyncio.Task]] = {}
+
+_kn_model_lock = threading.Lock()
+_kn_model_failed = False
+_kn_tokenizer = None
+_kn_model = None
 
 
 @router.get("/health")
@@ -174,6 +179,86 @@ def _contains_target_script(text: str, language: str) -> bool:
     return False
 
 
+def _is_offline_kn_enabled() -> bool:
+    return (os.getenv("KRISHI_ENABLE_OFFLINE_KANNADA", "1") or "1").strip() not in {"0", "false", "False"}
+
+
+def _is_offline_kn_ready() -> bool:
+    return _kn_tokenizer is not None and _kn_model is not None
+
+
+def _load_offline_kn_model() -> tuple[object, object] | tuple[None, None]:
+    global _kn_model_failed, _kn_tokenizer, _kn_model
+    if _kn_model_failed:
+        return None, None
+    if _kn_tokenizer is not None and _kn_model is not None:
+        return _kn_tokenizer, _kn_model
+
+    with _kn_model_lock:
+        if _kn_tokenizer is not None and _kn_model is not None:
+            return _kn_tokenizer, _kn_model
+        try:
+            # Keep startup/log output clean during one-time HF downloads.
+            os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+            os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+            from transformers.utils import logging as hf_logging
+
+            hf_logging.set_verbosity_error()
+
+            model_name = os.getenv("KRISHI_OFFLINE_KN_MODEL", "facebook/nllb-200-distilled-600M")
+            try:
+                _kn_tokenizer = AutoTokenizer.from_pretrained(model_name, local_files_only=True)
+                _kn_model = AutoModelForSeq2SeqLM.from_pretrained(model_name, local_files_only=True)
+            except Exception:
+                _kn_tokenizer = AutoTokenizer.from_pretrained(model_name)
+                _kn_model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+            logger.info(f"OFFLINE_KN_MODEL_LOADED model={model_name}")
+            return _kn_tokenizer, _kn_model
+        except Exception as exc:
+            _kn_model_failed = True
+            logger.info(f"OFFLINE_KN_MODEL_UNAVAILABLE error={str(exc)}")
+            return None, None
+
+
+def _offline_translate_kn_batch_sync(texts: list[str]) -> list[str] | None:
+    tokenizer, model = _load_offline_kn_model()
+    if tokenizer is None or model is None:
+        return None
+    if not texts:
+        return []
+
+    try:
+        src_lang = os.getenv("KRISHI_OFFLINE_KN_SRC_LANG", "eng_Latn")
+        tgt_lang = os.getenv("KRISHI_OFFLINE_KN_TGT_LANG", "kan_Knda")
+
+        # NLLB tokenizer expects source language set before tokenization.
+        if hasattr(tokenizer, "src_lang"):
+            tokenizer.src_lang = src_lang
+
+        encoded = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        forced_id = None
+        if hasattr(tokenizer, "convert_tokens_to_ids"):
+            forced_id = tokenizer.convert_tokens_to_ids(tgt_lang)
+
+        gen_kwargs = {"max_new_tokens": 256}
+        if forced_id is not None:
+            gen_kwargs["forced_bos_token_id"] = forced_id
+
+        outputs = model.generate(**encoded, **gen_kwargs)
+        decoded = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        out = [str(x).strip() for x in decoded]
+        return out
+    except Exception as exc:
+        logger.info(f"OFFLINE_KN_TRANSLATION_FAILED error={str(exc)}")
+        return None
+
+
+async def _offline_translate_kn_batch(texts: list[str]) -> list[str] | None:
+    return await asyncio.to_thread(_offline_translate_kn_batch_sync, texts)
+
+
 def _plan_contains_target_script(plan: dict, language: str) -> bool:
     checks: list[str] = [
         str(plan.get("soil_health_advisory", "")),
@@ -275,6 +360,11 @@ async def _translate_text_value(text: str, language: str) -> str | None:
     if _contains_target_script(value, language):
         return value
 
+    if language == "kn" and _is_offline_kn_enabled() and _is_offline_kn_ready():
+        offline = await _offline_translate_kn_batch([value])
+        if offline and len(offline) == 1 and _contains_target_script(offline[0], "kn"):
+            return offline[0]
+
     language_name = "Hindi" if language == "hi" else "Kannada"
     models = _translation_models(language)
     prompt = (
@@ -338,6 +428,13 @@ def _apply_translated_texts(plan: dict, paths: list[tuple], values: list[str], m
 async def _translate_text_batch(texts: list[str], language: str) -> list[str] | None:
     if not texts:
         return []
+
+    if language == "kn" and _is_offline_kn_enabled() and _is_offline_kn_ready():
+        offline = await _offline_translate_kn_batch(texts)
+        if offline and len(offline) == len(texts):
+            script_hits = sum(1 for x in offline if _contains_target_script(x, "kn"))
+            if script_hits > 0:
+                return offline
 
     language_name = "Hindi" if language == "hi" else "Kannada"
     models = _translation_models(language)
@@ -474,6 +571,18 @@ def _prewarm_translations(plan: dict) -> str:
 
     logger.info(f"TRANSLATION_PREWARM_STARTED languages={','.join(languages)} cache_key={cache_key[:12]}")
     return cache_key
+
+
+def prewarm_translation_runtime() -> None:
+    """Preload translation dependencies once at startup to avoid first-request downloads."""
+    if not _is_offline_kn_enabled():
+        logger.info("OFFLINE_KN_PREWARM_SKIPPED reason=disabled")
+        return
+    tokenizer, model = _load_offline_kn_model()
+    if tokenizer is not None and model is not None:
+        logger.info("OFFLINE_KN_PREWARM_READY")
+    else:
+        logger.info("OFFLINE_KN_PREWARM_FAILED")
 
 
 @router.post("/crop-plan/translate")

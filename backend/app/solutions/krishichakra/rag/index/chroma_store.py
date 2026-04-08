@@ -17,11 +17,15 @@ class ChromaVectorStore(VectorStore):
     def index_documents(self, docs: list[dict]) -> None:
         if not docs:
             return
-        ids = [d["id"] for d in docs]
-        texts = [d["text"] for d in docs]
-        metadatas = [d.get("metadata", {}) for d in docs]
-        embeddings = [d["embedding"] for d in docs]
-        self.collection.upsert(ids=ids, documents=texts, metadatas=metadatas, embeddings=embeddings)
+        batch_size = 5000
+        for i in range(0, len(docs), batch_size):
+            batch_docs = docs[i : i + batch_size]
+            ids = [d["id"] for d in batch_docs]
+            texts = [d["text"] for d in batch_docs]
+            metadatas = [d.get("metadata", {}) for d in batch_docs]
+            embeddings = [d["embedding"] for d in batch_docs]
+            self.collection.upsert(ids=ids, documents=texts, metadatas=metadatas, embeddings=embeddings)
+        
         logger.info("indexed docs", count=len(docs), collection=settings.vector_collection_name)
 
     def query(self, vector: list[float], top_k: int, filters: dict | None = None) -> list[dict]:
@@ -38,7 +42,20 @@ class ChromaVectorStore(VectorStore):
             elif len(clauses) > 1:
                 where = {"$and": clauses}
 
-        res = self.collection.query(query_embeddings=[vector], n_results=top_k, where=where)
+        try:
+            res = self.collection.query(query_embeddings=[vector], n_results=top_k, where=where)
+        except Exception as exc:
+            msg = str(exc).lower()
+            if "dimension" in msg and "embedding" in msg:
+                # If collection vectors and query vectors differ in dimension, fall back to sparse retrieval.
+                logger.warning(
+                    "vector query skipped due to embedding dimension mismatch",
+                    error=str(exc),
+                    query_dim=len(vector),
+                    collection=settings.vector_collection_name,
+                )
+                return []
+            raise
         ids = res.get("ids", [[]])[0]
         docs = res.get("documents", [[]])[0]
         metas = res.get("metadatas", [[]])[0]

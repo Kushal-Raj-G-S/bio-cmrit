@@ -103,9 +103,10 @@ export default function AuthPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('biobloom_password_user_id', profile.id)
         localStorage.setItem('biobloom_password_auth', 'true')
+        window.dispatchEvent(new Event('biobloom-password-auth-changed'))
       }
       setMessage({ type: 'success', text: '✅ Welcome back! Redirecting...' })
-      setTimeout(() => router.push('/dashboard'), 800)
+      setTimeout(() => router.replace('/dashboard'), 800)
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Login failed' })
     } finally {

@@ -29,6 +29,11 @@ class KeywordStore:
         out: list[dict] = []
         strict_mode = filters is not None
 
+        idf_cache = {}
+        for t in q_tokens:
+            doc_count = sum(1 for dd in self.docs if t in dd.get("_tf", {}))
+            idf_cache[t] = math.log(1 + (len(self.docs) + 1) / (1 + doc_count))
+
         for d in self.docs:
             meta = d.get("metadata", {})
             if filters:
@@ -51,7 +56,7 @@ class KeywordStore:
                 f = tf.get(t, 0)
                 if f == 0:
                     continue
-                idf = math.log(1 + (len(self.docs) + 1) / (1 + sum(1 for dd in self.docs if t in dd.get("_tf", {}))))
+                idf = idf_cache[t]
                 score += idf * ((f * (k1 + 1)) / (f + k1 * (1 - b + b * dl / avg_len)))
 
             if score > 0:

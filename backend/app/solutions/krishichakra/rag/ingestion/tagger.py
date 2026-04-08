@@ -11,7 +11,11 @@ SEASONS = ["kharif", "rabi", "zaid"]
 
 def tag_chunk(text: str) -> dict:
     lowered = text.lower()
+    out = {}
     crops = [c for c in CROPS if re.search(rf"\b{re.escape(c)}\b", lowered)]
+    if crops: out["crops"] = crops
     soils = [s for s in SOILS if re.search(rf"\b{s}\b", lowered)]
+    if soils: out["soil"] = soils
     seasons = [s.title() for s in SEASONS if re.search(rf"\b{s}\b", lowered)]
-    return {"crops": crops, "soil": soils, "season": seasons}
+    if seasons: out["season"] = seasons
+    return out

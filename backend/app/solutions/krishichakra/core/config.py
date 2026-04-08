@@ -16,6 +16,13 @@ def _normalize_base_url(url: str) -> str:
     return cleaned
 
 
+def _normalize_api_key(raw: str) -> str:
+    value = (raw or "").strip().strip('"').strip("'")
+    if value.lower().startswith("bearer "):
+        value = value[7:].strip()
+    return value
+
+
 load_dotenv(BACKEND_DIR / ".env")
 load_dotenv(BACKEND_DIR / ".env.example")
 
@@ -28,7 +35,7 @@ class Settings:
     nvidia_base_url: str = _normalize_base_url(
         os.getenv("NVIDIA_BASE_URL") or os.getenv("BASE_URL") or "https://integrate.api.nvidia.com"
     )
-    nvidia_api_key: str = os.getenv("NVIDIA_API_KEY", os.getenv("API_KEY", "")).strip()
+    nvidia_api_key: str = _normalize_api_key(os.getenv("NVIDIA_API_KEY", os.getenv("API_KEY", "")))
     vector_collection_name: str = os.getenv("KRISHI_VECTOR_COLLECTION", "krishichakra_crops")
     vector_db_path: str = os.getenv(
         "KRISHI_VECTOR_DB_PATH",

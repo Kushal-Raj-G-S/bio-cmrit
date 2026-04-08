@@ -20,14 +20,20 @@ def build_corpus_pipeline() -> int:
     corpus_path.parent.mkdir(parents=True, exist_ok=True)
     pdfs = list_pdf_files(settings.knowledge_base_dir)
     count = 0
-    with corpus_path.open("w", encoding="utf-8") as out:
-        for pdf in pdfs:
-            pages = extract_pages(str(pdf))
-            chunks = chunk_text(pages, pdf.name)
-            for ch in chunks:
-                ch["metadata"].update(tag_chunk(ch["text"]))
-                out.write(json.dumps(ch, ensure_ascii=True) + "\n")
-                count += 1
+    temp_path = corpus_path.with_suffix(".jsonl.tmp")
+    with temp_path.open("w", encoding="utf-8") as out:
+        for i, pdf in enumerate(pdfs, start=1):
+            print(f"[{i}/{len(pdfs)}] Extracting text from {pdf.name}...")
+            try:
+                pages = extract_pages(str(pdf))
+                chunks = chunk_text(pages, pdf.name)
+                for ch in chunks:
+                    ch["metadata"].update(tag_chunk(ch["text"]))
+                    out.write(json.dumps(ch, ensure_ascii=True) + "\n")
+                    count += 1
+            except Exception as e:
+                logger.error("Failed to process pdf", pdf=pdf.name, error=str(e))
+    temp_path.replace(corpus_path)
     logger.info("corpus built", chunk_count=count, corpus_path=str(corpus_path))
     return count
 
@@ -60,11 +66,13 @@ def build_vector_pipeline() -> int:
     vectors = get_local_embeddings([r["text"] for r in rows])
     docs = []
     for row, emb in zip(rows, vectors):
+        meta = row.get("metadata", {})
+        meta_clean = {k: v for k, v in meta.items() if not (isinstance(v, list) and len(v) == 0)}
         docs.append(
             {
                 "id": row["id"],
                 "text": row["text"],
-                "metadata": row.get("metadata", {}),
+                "metadata": meta_clean,
                 "embedding": emb,
             }
         )

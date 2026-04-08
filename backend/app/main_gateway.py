@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.solution_registry import load_solution_runtimes
+from app.solutions.krishichakra.api.v1.crop_plan import prewarm_translation_runtime
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -17,6 +18,11 @@ logger = logging.getLogger("main_gateway")
 
 def create_app() -> FastAPI:
     app = FastAPI(title="BioBloom Unified Backend", version="1.0.0")
+
+    @app.on_event("startup")
+    async def _gateway_startup_prewarm() -> None:
+        if "krishichakra" in settings.enabled_solutions:
+            prewarm_translation_runtime()
 
     # Allow frontend preflight requests for mounted solution APIs.
     app.add_middleware(

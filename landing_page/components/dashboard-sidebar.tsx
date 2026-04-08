@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Pill,
   Stethoscope,
+  Shield,
   Wind,
   GraduationCap,
   ChevronLeft,
@@ -57,13 +58,13 @@ const navigationItems = [
     color: "text-amber-700",
     bgColor: "bg-amber-100"
   },
-  //{
-  //  name: "KrishiBarosa",
-  //  icon: Shield,
-  //  href: "/dashboard",
-  //  color: "text-cyan-600",
-  //  bgColor: "bg-cyan-100"
-  //},
+  {
+    name: "KrishiBarosa",
+    icon: Shield,
+    href: "/dashboard/krishi-barosa",
+    color: "text-cyan-600",
+    bgColor: "bg-cyan-100"
+  },
   {
     name: "KrishiMeghMitra",
     icon: Wind,

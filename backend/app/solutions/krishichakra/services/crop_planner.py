@@ -138,7 +138,7 @@ RATIONALE_TEMPLATES = {
     "legume": (
         "{crop} is grown in Year {year} because it is a legume - it absorbs "
         "nitrogen from the air and fixes it into the soil (40-80 kg N/ha). "
-        "This reduces fertilizer cost in Year {next_year} by Rs2,500-3,500/ha. "
+        "This reduces fertilizer cost {next_year_phrase} by Rs2,500-3,500/ha. "
         "It also breaks pest and disease cycles left by {prev_crop}."
     ),
     "oilseed": (
@@ -222,12 +222,28 @@ CROP_RISK_ACTIONS = {
 }
 
 
-def get_advisory(crops: list[str]) -> dict:
-    for crop in crops:
-        key = crop.lower().strip()
-        if key in CROP_ADVISORY:
-            return CROP_ADVISORY[key]
-    return GENERIC_ADVISORY
+def build_field_advisory(rotation_cards: list[dict], soil: str, irrigation: str) -> dict:
+    def _note(crop: str, key: str) -> str:
+        c = (crop or "").lower().strip()
+        return CROP_ADVISORY.get(c, {}).get(key, GENERIC_ADVISORY[key])
+
+    crops = [str(c.get("recommended_crop", "")).strip() for c in rotation_cards if isinstance(c, dict)]
+    if not crops:
+        return dict(GENERIC_ADVISORY)
+
+    def _compose(key: str) -> str:
+        lines: list[str] = []
+        for idx, crop in enumerate(crops[:3], start=1):
+            lines.append(f"Year {idx} ({crop.title()}): {_note(crop, key)}")
+        prefix = f"For {soil} soil and {irrigation} irrigation, follow this 3-year guidance: "
+        return prefix + " ".join(lines)
+
+    return {
+        "soil": _compose("soil"),
+        "water": _compose("water"),
+        "pest": _compose("pest"),
+        "economic": _compose("economic"),
+    }
 
 
 def sanitize_yield(crop_name: str, llm_yield_str: str) -> str:
@@ -240,7 +256,7 @@ def sanitize_yield(crop_name: str, llm_yield_str: str) -> str:
 
 
 def needs_rationale_override(text: str) -> bool:
-    if not text or len(text) < 80:
+    if not text or len(text) < 30:
         return True
     bad_phrases = [
         "was found to be",
@@ -256,7 +272,8 @@ def needs_rationale_override(text: str) -> bool:
 def build_rationale(crop: str, year_idx: int, all_crops: list[str], soil: str = "", irrigation: str = "") -> str:
     c = (crop or "").lower().strip()
     prev = all_crops[year_idx - 2].lower().strip() if year_idx > 1 and len(all_crops) >= (year_idx - 1) else None
-    next_year = year_idx + 1
+    next_year = year_idx + 1 if year_idx < 3 else "the following season"
+    next_year_phrase = f"in Year {year_idx + 1}" if year_idx < 3 else "in the next season when you restart the rotation"
 
     if year_idx == 1:
         return RATIONALE_TEMPLATES["opener"].format(
@@ -269,6 +286,7 @@ def build_rationale(crop: str, year_idx: int, all_crops: list[str], soil: str = 
             crop=(crop or "Crop").title(),
             year=year_idx,
             next_year=next_year,
+            next_year_phrase=next_year_phrase,
             prev_crop=prev.title() if prev else "the previous crop",
         )
     if c in OILSEEDS:
@@ -411,8 +429,6 @@ def _template_to_rotation_plan(template: dict, start_season: str) -> RotationPla
 
 
 def _to_frontend_plan(field: FieldMetadata, plan: RotationPlan, trace: dict) -> dict:
-    rotation_crops = [y.crop.lower() for y in plan.years]
-    advisory = get_advisory(rotation_crops)
     rotation_plan = []
     all_crops = [y.crop for y in plan.years]
     for y in plan.years:
@@ -431,6 +447,7 @@ def _to_frontend_plan(field: FieldMetadata, plan: RotationPlan, trace: dict) -> 
         rotation_plan.append(
             {
                 "season": y.season,
+                "year_index": y.year_index,
                 "recommended_crop": crop_name,
                 "variety_suggestion": y.variety_suggestion or "Region-specific certified seed",
                 "rationale": rationale,
@@ -439,6 +456,8 @@ def _to_frontend_plan(field: FieldMetadata, plan: RotationPlan, trace: dict) -> 
                 "risk_notes": risk_notes,
             }
         )
+
+    advisory = build_field_advisory(rotation_plan, field.soil_type, field.irrigation_type)
 
     return {
         "field_id": field.id or "generated-field",
@@ -450,6 +469,7 @@ def _to_frontend_plan(field: FieldMetadata, plan: RotationPlan, trace: dict) -> 
         "water_management_tip": advisory["water"],
         "pest_disease_management": advisory["pest"],
         "economic_outlook": advisory["economic"],
+        "field_advisory": advisory,
         "retrieved_sources": plan.sources,
         "model_used": trace.get("model_used"),
         "confidence": plan.confidence,
@@ -464,11 +484,11 @@ async def generate_crop_plan(field: FieldMetadata) -> CropPlanResponse:
     if not safety.get("safe", True):
         raise HTTPException(status_code=400, detail=f"Request blocked by safety policy: {safety.get('reason')}")
 
-    context_chunks = await _retriever.retrieve(field, top_k=10)
+    context_chunks = await _retriever.retrieve(field, top_k=6)
     retrieved_chars = sum(len((c.get("text") or "")) for c in context_chunks)
     chunk_ids = [c.get("id") for c in context_chunks]
     logger.info(f"RAG_RETRIEVAL chunks={len(context_chunks)} text_chars={retrieved_chars} chunk_ids={chunk_ids}")
-    candidate_templates = _rotations_catalog.get_candidate_rotations(field, max_k=5)
+    candidate_templates = _rotations_catalog.get_candidate_rotations(field, max_k=4)
     candidate_ids = [t.get("id") for t in candidate_templates]
     logger.info(f"RAG_CANDIDATES count={len(candidate_templates)} candidate_ids={candidate_ids}")
 

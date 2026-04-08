@@ -15,9 +15,10 @@ logger = get_logger(__name__)
 
 ENGINES = {
     "fast": [
-        ("meta/llama-3.3-70b-instruct", 14),
-        ("nvidia/nemotron-3-nano-30b-a3b", 8),
-        ("nvidia/llama-3.3-nemotron-super-49b-v1.5", 6),
+        ("meta/llama-3.1-8b-instruct", 20),
+        ("nvidia/nemotron-3-nano-30b-a3b", 20),
+        ("meta/llama-3.3-70b-instruct", 20),
+        ("mistralai/devstral-2-123b-instruct-2512", 50),
     ],
     "ultra": [
         ("nvidia/llama-3.1-nemotron-ultra-253b-v1", 45),
@@ -40,6 +41,7 @@ PREAMBLE_SIGNALS = [
 
 _LAST_MODEL_USED = None
 NEMOTRON_SUPER_MODEL = "nvidia/llama-3.3-nemotron-super-49b-v1.5"
+HINDI_TRANSLATION_MODEL = "nvidia/nemotron-4-mini-hindi-4b-instruct"
 TIER_BUDGET_S = {"fast": 30, "ultra": 120}
 
 
@@ -179,7 +181,9 @@ async def _single_shot_chat_completion(url: str, headers: dict[str, str], payloa
 def _openai_streaming_completion(model_name: str, messages: list[dict], timeout_s: int) -> str:
     client = OpenAI(base_url=f"{settings.nvidia_base_url.rstrip('/')}/v1", api_key=settings.nvidia_api_key)
 
-    patched_messages = [{"role": "system", "content": "/think"}] + list(messages)
+    patched_messages = list(messages)
+    if model_name == NEMOTRON_SUPER_MODEL:
+        patched_messages = [{"role": "system", "content": "/think"}] + patched_messages
     completion = client.chat.completions.create(
         model=model_name,
         messages=patched_messages,
@@ -233,7 +237,7 @@ async def generate_chat_completion(engine_tier: str, messages: list[dict]) -> st
             "model": model_name,
             "messages": messages,
             "temperature": 0.2,
-            "max_tokens": 1800,
+            "max_tokens": 900,
             "stream": True,
         }
         if model_name in THINKING_MODELS:
@@ -249,23 +253,11 @@ async def generate_chat_completion(engine_tier: str, messages: list[dict]) -> st
 
             cleaned = _clean_raw(raw, model_name)
             if not cleaned:
-                logger.warning("llm model returned empty streamed content; retrying non-stream", model=model_name, latency_ms=latency_ms)
-                retry_started = time.perf_counter()
-                retry_remaining_s = tier_budget_s - (time.perf_counter() - tier_started)
-                retry_timeout_s = max(2, min(int(retry_remaining_s), attempt_timeout_s))
-                if retry_timeout_s <= 1:
-                    last_error = f"{model_name} -> no budget for retry"
-                    continue
-                retry_raw = await _single_shot_chat_completion(url, headers, payload, retry_timeout_s)
-                retry_latency_ms = round((time.perf_counter() - retry_started) * 1000, 2)
-                cleaned = _clean_raw(retry_raw, model_name)
-                if not cleaned:
-                    last_error = f"{model_name} -> empty content"
-                    logger.warning("llm model returned empty content", model=model_name, latency_ms=latency_ms, retry_latency_ms=retry_latency_ms)
-                    logger.warning(
-                        f"LLM_TRY_FAIL tier={engine_tier} attempt={idx} model={model_name} status=200 latency_ms={latency_ms} retry_latency_ms={retry_latency_ms} empty_content=True"
-                    )
-                    continue
+                last_error = f"{model_name} -> empty content"
+                logger.warning(
+                    f"LLM_TRY_FAIL tier={engine_tier} attempt={idx} model={model_name} status=200 latency_ms={latency_ms} empty_content=True"
+                )
+                continue
 
             _LAST_MODEL_USED = model_name
             logger.info("llm model success", model=model_name, latency_ms=latency_ms)
@@ -293,7 +285,10 @@ async def generate_single_model_completion(model_name: str, messages: list[dict]
     if model_name in THINKING_MODELS:
         payload["system_prompt"] = "detailed thinking on"
 
-    raw = await _stream_chat_completion(url, headers, payload, timeout_s)
+    if model_name == HINDI_TRANSLATION_MODEL:
+        raw = await asyncio.to_thread(_openai_streaming_completion, model_name, messages, timeout_s)
+    else:
+        raw = await _stream_chat_completion(url, headers, payload, timeout_s)
     cleaned = _clean_raw(raw, model_name)
     if not cleaned:
         retry_raw = await _single_shot_chat_completion(url, headers, payload, timeout_s)
