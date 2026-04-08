@@ -60,6 +60,7 @@ def _prewarm_languages() -> tuple[str, ...]:
     return tuple(dict.fromkeys(valid))
 
 TRANSLATION_CACHE_TTL_S = 30 * 60
+TRANSLATION_SYNC_TIMEOUT_S = float(os.getenv("KRISHI_TRANSLATION_SYNC_TIMEOUT_S", "22"))
 _translation_cache: dict[str, dict[str, dict]] = {}
 _translation_tasks: dict[str, dict[str, asyncio.Task]] = {}
 
@@ -443,7 +444,7 @@ async def _translate_and_cache(plan: dict, language: str) -> dict:
     try:
         translated = await _translate_full_plan(plan, language)
     except Exception as exc:
-        logger.warning(f"TRANSLATION_JSON_FAILED language={language} cache_key={cache_key[:12]} error={str(exc)}")
+        logger.info(f"TRANSLATION_JSON_FAILED language={language} cache_key={cache_key[:12]} error={str(exc)}")
         translated = await _translate_plan_fieldwise(plan, language)
     _set_cached_translation(cache_key, language, translated)
     latency_ms = round((time.perf_counter() - started) * 1000, 2)
@@ -466,7 +467,7 @@ def _prewarm_translations(plan: dict) -> str:
             try:
                 await _translate_and_cache(plan, lang)
             except Exception as exc:
-                logger.warning(f"TRANSLATION_FAILED language={lang} cache_key={cache_key[:12]} error={str(exc)}")
+                logger.info(f"TRANSLATION_FAILED language={lang} cache_key={cache_key[:12]} error={str(exc)}")
 
         task = asyncio.create_task(_worker(language))
         _set_inflight_translation_task(cache_key, language, task)
@@ -492,39 +493,32 @@ async def translate_plan(payload: PlanTranslationRequest) -> dict:
 
     inflight = _get_inflight_translation_task(cache_key, payload.language)
     if inflight and not inflight.done():
-        return {
-            "success": True,
-            "language": payload.language,
-            "status": "processing",
-            "plan": payload.plan,
-            "translated_by": "krishichakra-translation-background",
-            "translation_cache_key": cache_key,
-        }
+        try:
+            await asyncio.wait_for(asyncio.shield(inflight), timeout=TRANSLATION_SYNC_TIMEOUT_S)
+        except Exception:
+            pass
+        cached_after_wait = _get_cached_translation(cache_key, payload.language)
+        if cached_after_wait:
+            return {
+                "success": True,
+                "language": payload.language,
+                "plan": cached_after_wait,
+                "translated_by": "krishichakra-translation-cache",
+            }
 
     try:
         running = _get_inflight_translation_task(cache_key, payload.language)
         if running and not running.done():
-            return {
-                "success": True,
-                "language": payload.language,
-                "status": "processing",
-                "plan": payload.plan,
-                "translated_by": "krishichakra-translation-background",
-                "translation_cache_key": cache_key,
-            }
+            await asyncio.wait_for(asyncio.shield(running), timeout=TRANSLATION_SYNC_TIMEOUT_S)
+            cached_after_run = _get_cached_translation(cache_key, payload.language)
+            if cached_after_run:
+                out = cached_after_run
+            else:
+                out = await asyncio.wait_for(_translate_and_cache(payload.plan, payload.language), timeout=TRANSLATION_SYNC_TIMEOUT_S)
         else:
-            task = asyncio.create_task(_translate_and_cache(payload.plan, payload.language))
-            _set_inflight_translation_task(cache_key, payload.language, task)
-            return {
-                "success": True,
-                "language": payload.language,
-                "status": "processing",
-                "plan": payload.plan,
-                "translated_by": "krishichakra-translation-background",
-                "translation_cache_key": cache_key,
-            }
+            out = await asyncio.wait_for(_translate_and_cache(payload.plan, payload.language), timeout=TRANSLATION_SYNC_TIMEOUT_S)
     except Exception as exc:
-        logger.warning(f"TRANSLATION_HARD_FAIL language={payload.language} cache_key={cache_key[:12]} error={str(exc)}")
+        logger.info(f"TRANSLATION_HARD_FAIL language={payload.language} cache_key={cache_key[:12]} error={str(exc)}")
         if payload.language == "hi":
             out = _fallback_marked_translation(payload.plan, "hi")
             rp = _frontend_plan_to_rotation_plan(payload.plan)

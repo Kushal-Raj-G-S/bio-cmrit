@@ -296,5 +296,8 @@ async def generate_single_model_completion(model_name: str, messages: list[dict]
     raw = await _stream_chat_completion(url, headers, payload, timeout_s)
     cleaned = _clean_raw(raw, model_name)
     if not cleaned:
+        retry_raw = await _single_shot_chat_completion(url, headers, payload, timeout_s)
+        cleaned = _clean_raw(retry_raw, model_name)
+    if not cleaned:
         raise RuntimeError(f"{model_name} returned empty content")
     return cleaned
