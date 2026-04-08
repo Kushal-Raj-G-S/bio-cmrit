@@ -1,0 +1,53 @@
+# Node / Next.js
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/coverage/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/.mypy_cache/
+**/venv/
+**/.venv/
+
+# Env / secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+**/*.log
+
+# IDE / OS
+**/.vscode/
+**/.idea/
+**/.DS_Store
+Thumbs.db
+
+# Git internals accidentally copied
+**/.git_embedded_backup/
+
+# Misc generated files
+**/*.tsbuildinfo
+
+# Large datasets / model artifacts (skip for initial push)
+datasets/
+models_export/
+krishiausadh/20+ unchanged/
+Data for Identification of Plant Leaf Diseases Using a 9-layer Deep Convolutional Neural Network/
+Plant_leaf_diseases_dataset_with_augmentation/
+Plant_leave_diseases_dataset_without_augmentation/
+krishichakra/vector_store/
+main_backend/krishichakra/vector_store/
+
+# Common ML artifact formats
+**/*.pt
+**/*.pth
+**/*.h5
+**/*.ckpt
+**/*.onnx
+**/*.joblib
+**/*.pkl
