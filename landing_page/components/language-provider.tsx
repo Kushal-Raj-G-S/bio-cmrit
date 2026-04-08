@@ -10,6 +10,7 @@ interface LanguageContextType {
   availableLanguages: string[]
   getLanguageName: (code: string) => string
   hasTranslation: (key: string, language?: string) => boolean
+  isTranslating: boolean
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)

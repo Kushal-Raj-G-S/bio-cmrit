@@ -5,6 +5,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import CountUp from 'react-countup'
 import { useAuth } from '@/context/auth-context'
+import { useTranslation } from '@/hooks/use-translation'
 import { useEducationDashboard } from '@/hooks/useEducationDashboard'
 import { 
   Card, 
@@ -63,6 +64,7 @@ export const ModernGamifiedDashboard = ({
 }: DashboardProps) => {
   // Get authenticated user
   const { user: authUser } = useAuth()
+  const { t } = useTranslation()
   
   // Get live education data
   const { 
@@ -82,7 +84,7 @@ export const ModernGamifiedDashboard = ({
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-amber-50 to-emerald-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your dashboard...</p>
+          <p className="text-gray-600">{t("gyanaAshram.overview.loadingDashboard")}</p>
         </div>
       </div>
     )
@@ -95,7 +97,7 @@ export const ModernGamifiedDashboard = ({
         <div className="text-center">
           <p className="text-red-600 mb-4">Error loading dashboard: {error}</p>
           <Button onClick={() => window.location.reload()}>
-            Try Again
+            {t("gyanaAshram.overview.tryAgain")}
           </Button>
         </div>
       </div>
@@ -155,8 +157,9 @@ export const ModernGamifiedDashboard = ({
   }
   
   const calendarDays = generateCalendarDays()
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December']
+  const monthKeys = ['january', 'february', 'march', 'april', 'may', 'june',
+    'july', 'august', 'september', 'october', 'november', 'december']
+  const monthNames = monthKeys.map(k => t(`gyanaAshram.calendar.${k}`))
   
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
@@ -233,9 +236,9 @@ export const ModernGamifiedDashboard = ({
                 transition={{ delay: 0.2 }}
               >
                 <h1 className="text-3xl md:text-4xl font-bold">
-                  Welcome back, {dashboardData.user.name}! 
+                  {t("gyanaAshram.hero.welcomeBack")}, {dashboardData.user.name}! 
                 </h1>
-                <p className="text-green-100 text-lg">Continue your farming mastery journey</p>
+                <p className="text-green-100 text-lg">{t("gyanaAshram.hero.subtitle")}</p>
               </motion.div>
               
               <motion.div
@@ -245,7 +248,7 @@ export const ModernGamifiedDashboard = ({
                 className="flex items-center gap-4"
               >
                 <div className="bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
-                  <span className="text-sm font-medium">Level {dashboardData.user.level}</span>
+                  <span className="text-sm font-medium">{t("gyanaAshram.hero.level")} {dashboardData.user.level}</span>
                 </div>
                 <div className="flex-1 max-w-xs">
                   <div className="flex justify-between text-sm mb-1">
@@ -292,7 +295,7 @@ export const ModernGamifiedDashboard = ({
                   <div className="text-center space-y-3">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Trophy className="w-5 h-5 text-yellow-600" />
-                      <span className="font-bold text-lg text-gray-900">Level {dashboardData.user.level}</span>
+                      <span className="font-bold text-lg text-gray-900">{t("gyanaAshram.hero.level")} {dashboardData.user.level}</span>
                     </div>
                     
                     <div className="relative w-20 h-20 mx-auto">
@@ -324,7 +327,7 @@ export const ModernGamifiedDashboard = ({
                         <CountUp end={dashboardData.user.xp} duration={2} /> / {dashboardData.user.xpToNext} XP
                       </p>
                       <p className="text-xs text-gray-500">
-                        {dashboardData.user.xpToNext - dashboardData.user.xp} XP to next level
+                        {dashboardData.user.xpToNext - dashboardData.user.xp} {t("gyanaAshram.overview.xpToNextLevel")}
                       </p>
                     </div>
                   </div>
@@ -342,7 +345,7 @@ export const ModernGamifiedDashboard = ({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-green-600" />
-                    Active Courses
+                    {t("gyanaAshram.overview.activeCourses")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
@@ -359,7 +362,7 @@ export const ModernGamifiedDashboard = ({
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs text-gray-600">
-                          <span>Progress</span>
+                          <span>{t("gyanaAshram.overview.progress")}</span>
                           <span>{65 + index * 10}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -384,16 +387,16 @@ export const ModernGamifiedDashboard = ({
             >
               <Card className="border-none shadow-sm h-full">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-bold text-gray-900">Stats & Achievements</CardTitle>
+                  <CardTitle className="text-lg font-bold text-gray-900">{t("gyanaAshram.overview.statsAndAchievements")}</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
                   {/* Quick Stats Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      { label: 'Certificates', value: dashboardData.stats.certificates, icon: Award, color: 'text-purple-600' },
-                      { label: 'Study Hours', value: `${dashboardData.stats.studyHours}h`, icon: Clock, color: 'text-blue-600' },
-                      { label: 'Completed', value: `${dashboardData.stats.coursesCompleted}/${dashboardData.stats.totalCourses}`, icon: CheckCircle, color: 'text-green-600' },
-                      { label: 'This Month', value: `${dashboardData.stats.studyHoursThisMonth}h`, icon: TrendingUp, color: 'text-orange-600' }
+                      { label: t('gyanaAshram.stats.certificates'), value: dashboardData.stats.certificates, icon: Award, color: 'text-purple-600' },
+                      { label: t('gyanaAshram.stats.studyHours'), value: `${dashboardData.stats.studyHours}h`, icon: Clock, color: 'text-blue-600' },
+                      { label: t('gyanaAshram.overview.completed'), value: `${dashboardData.stats.coursesCompleted}/${dashboardData.stats.totalCourses}`, icon: CheckCircle, color: 'text-green-600' },
+                      { label: t('gyanaAshram.overview.thisMonth'), value: `${dashboardData.stats.studyHoursThisMonth}h`, icon: TrendingUp, color: 'text-orange-600' }
                     ].map((stat, index) => (
                       <div key={stat.label} className="text-center p-4 bg-gray-50 rounded-lg">
                         <stat.icon className={`w-6 h-6 ${stat.color} mx-auto mb-2`} />
@@ -410,25 +413,25 @@ export const ModernGamifiedDashboard = ({
                         <Flame className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-gray-900 text-base">Learning Streak</h4>
-                        <p className="text-sm text-gray-600">Keep the momentum going!</p>
+                        <h4 className="font-bold text-gray-900 text-base">{t("gyanaAshram.overview.learningStreak")}</h4>
+                        <p className="text-sm text-gray-600">{t("gyanaAshram.overview.keepMomentum")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-3xl font-bold text-orange-600">
                         <CountUp end={userStreak} duration={2} />
                       </span>
-                      <span className="text-base text-gray-600">days in a row</span>
+                      <span className="text-base text-gray-600">{t("gyanaAshram.overview.daysInARow")}</span>
                     </div>
                   </div>
 
                   {/* Recent Achievements */}
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900 text-base">Recent Achievements</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.recentAchievements")}</h4>
                     {[
-                      { title: 'First Course Completed', icon: Medal, color: 'text-yellow-600' },
-                      { title: 'Week Streak', icon: Flame, color: 'text-orange-600' },
-                      { title: 'Community Member', icon: Users, color: 'text-blue-600' }
+                      { title: t('gyanaAshram.overview.firstCourseCompleted'), icon: Medal, color: 'text-yellow-600' },
+                      { title: t('gyanaAshram.overview.weekStreak'), icon: Flame, color: 'text-orange-600' },
+                      { title: t('gyanaAshram.overview.communityMember'), icon: Users, color: 'text-blue-600' }
                     ].map((achievement, index) => (
                       <div key={achievement.title} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
@@ -442,13 +445,13 @@ export const ModernGamifiedDashboard = ({
                   {/* Daily Goal Progress */}
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <h4 className="font-medium text-gray-900 text-base">Today's Goal</h4>
-                      <span className="text-sm text-gray-500">2/3 completed</span>
+                      <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.todaysGoal")}</h4>
+                      <span className="text-sm text-gray-500">2/3 {t("gyanaAshram.overview.todaysGoalStatus")}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div className="h-3 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-1000 w-2/3" />
                     </div>
-                    <p className="text-sm text-gray-600">Complete 1 more lesson to reach your daily goal!</p>
+                    <p className="text-sm text-gray-600">{t("gyanaAshram.overview.dailyGoalMessage")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -469,7 +472,7 @@ export const ModernGamifiedDashboard = ({
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
                       <CalendarDays className="w-6 h-6 text-green-600" />
-                      Learning Calendar
+                      {t("gyanaAshram.overview.learningCalendar")}
                     </CardTitle>
                     <div className="flex items-center gap-1">
                       <Button 
@@ -498,7 +501,7 @@ export const ModernGamifiedDashboard = ({
                   <div className="space-y-4">
                     {/* Calendar Header */}
                     <div className="grid grid-cols-7 gap-1">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                      {[t('gyanaAshram.calendar.sun'), t('gyanaAshram.calendar.mon'), t('gyanaAshram.calendar.tue'), t('gyanaAshram.calendar.wed'), t('gyanaAshram.calendar.thu'), t('gyanaAshram.calendar.fri'), t('gyanaAshram.calendar.sat')].map(day => (
                         <div key={day} className="text-center text-sm font-medium text-gray-500 py-2">
                           {day}
                         </div>
@@ -538,15 +541,15 @@ export const ModernGamifiedDashboard = ({
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                          <span className="text-sm text-gray-600">Visited</span>
+                          <span className="text-sm text-gray-600">{t("gyanaAshram.overview.visited")}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                          <span className="text-sm text-gray-600">Today</span>
+                          <span className="text-sm text-gray-600">{t("gyanaAshram.overview.today")}</span>
                         </div>
                       </div>
                       <div className="text-sm text-gray-500 font-medium">
-                        {visitDates.size} visits total
+                        {visitDates.size} {t("gyanaAshram.overview.visitsTotal")}
                       </div>
                     </div>
                   </div>
@@ -563,17 +566,17 @@ export const ModernGamifiedDashboard = ({
             >
               <Card className="border-none shadow-sm h-full">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-xl font-bold text-gray-900">Activity & Progress</CardTitle>
+                  <CardTitle className="text-xl font-bold text-gray-900">{t("gyanaAshram.overview.activityAndProgress")}</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-5">
                   {/* Recent Activity */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 text-base">Recent Activity</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.recentActivity")}</h4>
                     {[
-                      { action: 'Completed lesson', subject: 'AI-Powered Crop Monitoring', time: '2 hours ago', icon: CheckCircle, color: 'text-green-600' },
-                      { action: 'Started course', subject: 'Sustainable Water Management', time: '1 day ago', icon: Play, color: 'text-blue-600' },
-                      { action: 'Earned certificate', subject: 'Organic Farming Basics', time: '3 days ago', icon: Award, color: 'text-purple-600' },
-                      { action: 'Joined community', subject: 'Microbiology Group', time: '5 days ago', icon: Users, color: 'text-orange-600' }
+                      { action: t('gyanaAshram.overview.completedLesson'), subject: 'AI-Powered Crop Monitoring', time: `2 ${t('gyanaAshram.overview.hoursAgo')}`, icon: CheckCircle, color: 'text-green-600' },
+                      { action: t('gyanaAshram.overview.startedCourse'), subject: 'Sustainable Water Management', time: `1 ${t('gyanaAshram.overview.dayAgo')}`, icon: Play, color: 'text-blue-600' },
+                      { action: t('gyanaAshram.overview.earnedCertificate'), subject: 'Organic Farming Basics', time: `3 ${t('gyanaAshram.overview.daysAgo')}`, icon: Award, color: 'text-purple-600' },
+                      { action: t('gyanaAshram.overview.joinedCommunity'), subject: 'Microbiology Group', time: `5 ${t('gyanaAshram.overview.daysAgo')}`, icon: Users, color: 'text-orange-600' }
                     ].map((activity, index) => (
                       <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                         <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm`}>
@@ -590,7 +593,7 @@ export const ModernGamifiedDashboard = ({
 
                   {/* Weekly Learning Overview */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 text-base">This Week's Progress</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.thisWeeksProgress")}</h4>
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-5">
                       <div className="grid grid-cols-7 gap-3 mb-4">
                         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
@@ -603,20 +606,20 @@ export const ModernGamifiedDashboard = ({
                         ))}
                       </div>
                       <div className="flex justify-between text-base">
-                        <span className="text-gray-600">6/7 days completed</span>
-                        <span className="text-green-600 font-medium">86% weekly goal</span>
+                        <span className="text-gray-600">6/7 {t("gyanaAshram.overview.daysCompleted")}</span>
+                        <span className="text-green-600 font-medium">86% {t("gyanaAshram.overview.weeklyGoal")}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Study Time Analysis */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 text-base">Study Time Breakdown</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.studyTimeBreakdown")}</h4>
                     <div className="space-y-3">
                       {[
-                        { subject: 'Crop Monitoring', hours: 12, color: 'bg-green-400', percentage: 60 },
-                        { subject: 'Water Management', hours: 5, color: 'bg-blue-400', percentage: 25 },
-                        { subject: 'Soil Science', hours: 3, color: 'bg-yellow-400', percentage: 15 }
+                        { subject: t('gyanaAshram.overview.cropMonitoring'), hours: 12, color: 'bg-green-400', percentage: 60 },
+                        { subject: t('gyanaAshram.overview.waterManagement'), hours: 5, color: 'bg-blue-400', percentage: 25 },
+                        { subject: t('gyanaAshram.overview.soilScience'), hours: 3, color: 'bg-yellow-400', percentage: 15 }
                       ].map((item, index) => (
                         <div key={item.subject} className="space-y-2">
                           <div className="flex justify-between text-sm">
@@ -649,14 +652,14 @@ export const ModernGamifiedDashboard = ({
             >
               <Card className="border-none shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-bold text-gray-900">Quick Actions</CardTitle>
+                  <CardTitle className="text-lg font-bold text-gray-900">{t("gyanaAshram.overview.quickActions")}</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
                   {[
-                    { icon: BookOpen, label: 'Continue Learning', color: 'text-green-600', bg: 'bg-green-50' },
-                    { icon: Download, label: 'Download Certificate', color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { icon: Users, label: 'Join Study Group', color: 'text-purple-600', bg: 'bg-purple-50' },
-                    { icon: MessageSquare, label: 'Ask Community', color: 'text-orange-600', bg: 'bg-orange-50' }
+                    { icon: BookOpen, label: t('gyanaAshram.overview.continueLearning'), color: 'text-green-600', bg: 'bg-green-50' },
+                    { icon: Download, label: t('gyanaAshram.overview.downloadCertificate'), color: 'text-blue-600', bg: 'bg-blue-50' },
+                    { icon: Users, label: t('gyanaAshram.overview.joinStudyGroup'), color: 'text-purple-600', bg: 'bg-purple-50' },
+                    { icon: MessageSquare, label: t('gyanaAshram.overview.askCommunity'), color: 'text-orange-600', bg: 'bg-orange-50' }
                   ].map((action, index) => (
                     <button
                       key={action.label}
@@ -681,7 +684,7 @@ export const ModernGamifiedDashboard = ({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <Users className="w-5 h-5 text-green-600" />
-                    Communities
+                    {t("gyanaAshram.overview.communities")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-4">
@@ -695,14 +698,14 @@ export const ModernGamifiedDashboard = ({
                       </div>
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 text-base">{community.name}</h4>
-                        <p className="text-sm text-gray-500">{community.members} farmers</p>
+                        <p className="text-sm text-gray-500">{community.members} {t("gyanaAshram.overview.farmers")}</p>
                       </div>
                     </div>
                   ))}
                   
                   <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white text-base py-3">
                     <Users className="w-5 h-5 mr-2" />
-                    Explore Communities
+                    {t("gyanaAshram.overview.exploreCommunities")}
                   </Button>
                 </CardContent>
               </Card>
@@ -717,12 +720,12 @@ export const ModernGamifiedDashboard = ({
             >
               <Card className="border-none shadow-sm h-full">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-bold text-gray-900">Learning Path</CardTitle>
+                  <CardTitle className="text-lg font-bold text-gray-900">{t("gyanaAshram.overview.learningPath")}</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-5">
                   {/* Recommended Courses */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 text-base">Recommended Courses</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.recommendedCourses")}</h4>
                     {dashboardData.recommendations.slice(0, 2).map((course, index) => (
                       <div key={course.id} className="space-y-3 p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-start gap-3">
@@ -747,7 +750,7 @@ export const ModernGamifiedDashboard = ({
                         </div>
                         <Button size="sm" className="w-full bg-green-600 hover:bg-green-700 text-white text-sm py-2">
                           <Play className="w-4 h-4 mr-2" />
-                          Start Course
+                          {t("gyanaAshram.overview.startCourse")}
                         </Button>
                       </div>
                     ))}
@@ -755,26 +758,26 @@ export const ModernGamifiedDashboard = ({
 
                   {/* Learning Insights */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 text-base">Learning Insights</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.learningInsights")}</h4>
                     <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4">
                       <div className="flex items-center gap-3 mb-3">
                         <Brain className="w-5 h-5 text-purple-600" />
-                        <span className="font-medium text-purple-900 text-base">Smart Recommendation</span>
+                        <span className="font-medium text-purple-900 text-base">{t("gyanaAshram.overview.smartRecommendation")}</span>
                       </div>
                       <p className="text-sm text-purple-700">
-                        Based on your progress in crop monitoring, consider exploring pest management next.
+                        {t("gyanaAshram.overview.insightMessage")}
                       </p>
                     </div>
                   </div>
 
                   {/* Next Milestones */}
                   <div className="space-y-4">
-                    <h4 className="font-medium text-gray-900 text-base">Next Milestones</h4>
+                    <h4 className="font-medium text-gray-900 text-base">{t("gyanaAshram.overview.nextMilestones")}</h4>
                     <div className="space-y-3">
                       {[
-                        { milestone: 'Complete 10 courses', progress: 50, current: 5, total: 10 },
-                        { milestone: 'Earn 5 certificates', progress: 60, current: 3, total: 5 },
-                        { milestone: '50 study hours', progress: 74, current: 37, total: 50 }
+                        { milestone: t('gyanaAshram.overview.completeCourses'), progress: 50, current: 5, total: 10 },
+                        { milestone: t('gyanaAshram.overview.earnCertificates'), progress: 60, current: 3, total: 5 },
+                        { milestone: t('gyanaAshram.overview.studyHoursGoal'), progress: 74, current: 37, total: 50 }
                       ].map((item, index) => (
                         <div key={item.milestone} className="space-y-2">
                           <div className="flex justify-between text-sm">

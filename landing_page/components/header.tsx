@@ -1,32 +1,64 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Leaf, Menu, Globe, X, Home } from "lucide-react"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Leaf, Menu, Globe, X, Home, Search, Check, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useTranslation } from "@/hooks/use-translation"
 import { useAuth } from "@/context/auth-context"
-
-const languages = [
-  { code: "en", name: "English", native: "English" },
-  { code: "hi", name: "Hindi", native: "हिंदी" },
-  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
-]
+import { SARVAM_LANGUAGES } from "@/lib/sarvam-languages"
+import { cn } from "@/lib/utils"
 
 interface HeaderProps {
   currentLanguage?: string
   onLanguageChange?: (language: string) => void
 }
 
-export default function Header({ currentLanguage = "en", onLanguageChange }: HeaderProps) {
+export default function Header({ currentLanguage: externalLang, onLanguageChange }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { t } = useTranslation()
+  const { t, currentLanguage, changeLanguage, isTranslating } = useTranslation()
   const { isAuthenticated } = useAuth()
+  const [langSearchQuery, setLangSearchQuery] = useState("")
+  const [isLangPopoverOpen, setIsLangPopoverOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const currentLang = languages.find((lang) => lang.code === currentLanguage) || languages[0]
+  // Use the hook's language, but allow external override
+  const activeLang = externalLang || currentLanguage
+
+  const currentLang = SARVAM_LANGUAGES.find((l) => l.code === activeLang) || SARVAM_LANGUAGES[0]
+
+  // Focus search input when popover opens
+  useEffect(() => {
+    if (isLangPopoverOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 100)
+    }
+    if (!isLangPopoverOpen) {
+      setLangSearchQuery("")
+    }
+  }, [isLangPopoverOpen])
+
+  // Filter languages
+  const filteredLanguages = SARVAM_LANGUAGES.filter((lang) => {
+    const q = langSearchQuery.toLowerCase()
+    return (
+      lang.name.toLowerCase().includes(q) ||
+      lang.native.toLowerCase().includes(q) ||
+      lang.code.toLowerCase().includes(q)
+    )
+  })
+
+  const handleLanguageSelect = (code: string) => {
+    changeLanguage(code)
+    onLanguageChange?.(code)
+    setIsLangPopoverOpen(false)
+  }
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50 animate-in slide-in-from-top-2 duration-300">
@@ -68,27 +100,103 @@ export default function Header({ currentLanguage = "en", onLanguageChange }: Hea
         </nav>
 
         <div className="flex items-center gap-4">
-          {/* Language Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="hidden md:flex hover:bg-green-50 transition-all duration-200">
-                <Globe className="w-4 h-4 mr-2" />
-                {currentLang.native}
+          {/* Language Selector — Popover with search */}
+          <Popover open={isLangPopoverOpen} onOpenChange={setIsLangPopoverOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "hidden md:flex hover:bg-green-50 transition-all duration-200 gap-1.5",
+                  isTranslating && "animate-pulse"
+                )}
+              >
+                {isTranslating ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+                ) : (
+                  <Globe className="w-4 h-4 text-green-600" />
+                )}
+                <span className="max-w-[80px] truncate">{currentLang.native}</span>
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 animate-in zoom-in-95 duration-150">
-              {languages.map((language) => (
-                <DropdownMenuItem
-                  key={language.code}
-                  onClick={() => onLanguageChange?.(language.code)}
-                  className={currentLanguage === language.code ? "bg-green-50" : ""}
-                >
-                  <span className="font-medium">{language.native}</span>
-                  <span className="text-sm text-gray-500 ml-2">({language.name})</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-72 p-0 shadow-xl border-green-100 animate-in zoom-in-95 duration-150"
+              sideOffset={8}
+            >
+              {/* Header */}
+              <div className="p-3 border-b bg-gradient-to-r from-green-50 to-emerald-50">
+                <h3 className="font-semibold text-sm text-gray-900 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-green-600" />
+                  {t("dashboard.topbar.language")}
+                  {isTranslating && (
+                    <span className="ml-auto flex items-center gap-1 text-xs text-green-600 font-normal">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Translating...
+                    </span>
+                  )}
+                </h3>
+              </div>
+
+              {/* Search */}
+              <div className="p-2 border-b">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search language..."
+                    value={langSearchQuery}
+                    onChange={(e) => setLangSearchQuery(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-gray-200 
+                               focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent
+                               placeholder:text-gray-400"
+                  />
+                </div>
+              </div>
+
+              {/* Language list */}
+              <div className="max-h-72 overflow-y-auto py-1">
+                {filteredLanguages.length > 0 ? (
+                  filteredLanguages.map((lang) => {
+                    const isActive = activeLang === lang.code
+                    return (
+                      <button
+                        key={lang.code}
+                        onClick={() => handleLanguageSelect(lang.code)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors duration-150",
+                          "hover:bg-green-50",
+                          isActive && "bg-green-50"
+                        )}
+                      >
+                        <span className="text-base font-medium w-16 text-gray-900">
+                          {lang.native}
+                        </span>
+                        <span className="text-sm text-gray-500 flex-1">
+                          {lang.name}
+                        </span>
+                        {isActive && (
+                          <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        )}
+                      </button>
+                    )
+                  })
+                ) : (
+                  <div className="px-3 py-6 text-center text-sm text-gray-400">
+                    No languages found
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-2 border-t bg-gray-50">
+                <p className="text-[10px] text-gray-400 text-center">
+                  Powered by Sarvam AI · 22 Indic languages
+                </p>
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {isAuthenticated ? (
             <Link href="/dashboard">
@@ -149,6 +257,38 @@ export default function Header({ currentLanguage = "en", onLanguageChange }: Hea
             >
               {t("navigation.support")}
             </Link>
+
+            {/* Mobile Language Selector */}
+            <div className="pt-2 border-t">
+              <p className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                <Globe className="w-3 h-3" />
+                {t("dashboard.topbar.language")}
+                {isTranslating && <Loader2 className="w-3 h-3 animate-spin text-green-600 ml-1" />}
+              </p>
+              <div className="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
+                {SARVAM_LANGUAGES.map((lang) => {
+                  const isActive = activeLang === lang.code
+                  return (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        handleLanguageSelect(lang.code)
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className={cn(
+                        "text-xs px-2 py-1.5 rounded-md transition-colors duration-150 text-center",
+                        isActive
+                          ? "bg-green-100 text-green-800 font-medium"
+                          : "bg-gray-50 text-gray-600 hover:bg-green-50"
+                      )}
+                    >
+                      {lang.native}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <div className="pt-4 border-t">
               {isAuthenticated ? (
                 <Link href="/dashboard">

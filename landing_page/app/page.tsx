@@ -59,7 +59,7 @@ export default function HomePage() {
         <div className="container mx-auto text-center max-w-5xl relative z-10">
           <FadeIn delay={50}>
             <Badge className="mb-6 bg-green-100 text-green-800 hover:bg-green-200 text-sm px-4 py-2">
-              {t("hero.badge")} • Made for Indian Agriculture 🇮🇳
+              {t("hero.badge")} • {t("hero.madeForIndia")} 🇮🇳
             </Badge>
           </FadeIn>
 
@@ -101,7 +101,7 @@ export default function HomePage() {
                   <Users className="w-8 h-8 text-green-600 group-hover:text-white transition-colors duration-200" />
                 </div>
                 <div className="font-heading font-bold text-3xl text-gray-900">24/7</div>
-                <div className="text-gray-600 font-medium">AI Support</div>
+                <div className="text-gray-600 font-medium">{t("stats.aiSupport")}</div>
               </div>
             </ScaleIn>
             <ScaleIn delay={200}>
@@ -134,15 +134,13 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <Badge className="mb-4 bg-blue-100 text-blue-800 hover:bg-blue-200 text-sm px-4 py-2">
                 <Zap className="w-4 h-4 inline mr-2" />
-                Powered by Advanced AI
+                {t("aiFeatures.badge")}
               </Badge>
               <h2 className="font-heading font-bold text-4xl md:text-5xl text-gray-900 mb-6">
-                Revolutionary AI for Indian Agriculture
+                {t("aiFeatures.title")}
               </h2>
               <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-                Experience the future of farming with our cutting-edge artificial intelligence designed specifically for
-                Indian soil, climate, and farming practices. From crop prediction to pest management, our AI learns from
-                millions of data points to give you precise, actionable insights.
+                {t("aiFeatures.subtitle")}
               </p>
             </div>
           </FadeIn>
@@ -155,11 +153,9 @@ export default function HomePage() {
                     <Brain className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-semibold text-2xl text-gray-900 mb-3">Smart Crop Intelligence</h3>
+                    <h3 className="font-heading font-semibold text-2xl text-gray-900 mb-3">{t("aiFeatures.smartCrop.title")}</h3>
                     <p className="text-gray-600 text-lg leading-relaxed">
-                      Our AI analyzes soil conditions, weather patterns, and historical data to recommend the perfect
-                      crops for your land. Increase yields by up to 45% with data-driven crop selection and rotation
-                      strategies.
+                      {t("aiFeatures.smartCrop.description")}
                     </p>
                   </div>
                 </div>
@@ -169,10 +165,9 @@ export default function HomePage() {
                     <Zap className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-semibold text-2xl text-gray-900 mb-3">Real-Time Monitoring</h3>
+                    <h3 className="font-heading font-semibold text-2xl text-gray-900 mb-3">{t("aiFeatures.realTime.title")}</h3>
                     <p className="text-gray-600 text-lg leading-relaxed">
-                      Get instant alerts about pest threats, disease outbreaks, and optimal harvesting times. Our AI
-                      monitors satellite imagery and weather data 24/7 to protect your investment.
+                      {t("aiFeatures.realTime.description")}
                     </p>
                   </div>
                 </div>
@@ -182,10 +177,9 @@ export default function HomePage() {
                     <BarChart3 className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-heading font-semibold text-2xl text-gray-900 mb-3">Predictive Analytics</h3>
+                    <h3 className="font-heading font-semibold text-2xl text-gray-900 mb-3">{t("aiFeatures.predictive.title")}</h3>
                     <p className="text-gray-600 text-lg leading-relaxed">
-                      Forecast market prices, predict weather impacts, and plan your farming calendar with AI-powered
-                      insights. Make informed decisions that maximize profitability and minimize risks.
+                      {t("aiFeatures.predictive.description")}
                     </p>
                   </div>
                 </div>
@@ -206,7 +200,7 @@ export default function HomePage() {
                 </div>
                 <div className="absolute -top-4 -right-4 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg animate-pulse">
                   <Zap className="w-4 h-4 inline mr-2" />
-                  AI-Powered
+                  {t("aiFeatures.aiPowered")}
                 </div>
               </div>
             </SlideRight>
@@ -221,13 +215,13 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <Badge className="mb-4 bg-green-100 text-green-800 hover:bg-green-200 text-sm px-4 py-2">
                 <Award className="w-4 h-4 inline mr-2" />
-                Why BioBloom?
+                {t("whyBioBloom.badge")}
               </Badge>
               <h2 className="font-heading font-bold text-4xl md:text-5xl text-gray-900 mb-6">
-                The Smart Choice for Modern Farmers
+                {t("whyBioBloom.title")}
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Join thousands of progressive farmers who are transforming their agricultural practices with intelligent technology
+                {t("whyBioBloom.subtitle")}
               </p>
             </div>
           </FadeIn>
@@ -239,8 +233,8 @@ export default function HomePage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <Target className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">95% Accuracy</h3>
-                  <p className="text-gray-600">AI predictions backed by millions of data points from Indian farms</p>
+                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">{t("whyBioBloom.accuracy.title")}</h3>
+                  <p className="text-gray-600">{t("whyBioBloom.accuracy.description")}</p>
                 </CardContent>
               </Card>
             </ScaleIn>
@@ -251,8 +245,8 @@ export default function HomePage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <Smartphone className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">Easy to Use</h3>
-                  <p className="text-gray-600">Simple interface designed for farmers, accessible on any device</p>
+                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">{t("whyBioBloom.easyToUse.title")}</h3>
+                  <p className="text-gray-600">{t("whyBioBloom.easyToUse.description")}</p>
                 </CardContent>
               </Card>
             </ScaleIn>
@@ -263,8 +257,8 @@ export default function HomePage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <DollarSign className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">Cost Savings</h3>
-                  <p className="text-gray-600">Reduce input costs by 30% with optimized resource management</p>
+                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">{t("whyBioBloom.costSavings.title")}</h3>
+                  <p className="text-gray-600">{t("whyBioBloom.costSavings.description")}</p>
                 </CardContent>
               </Card>
             </ScaleIn>
@@ -275,8 +269,8 @@ export default function HomePage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                     <HeartHandshake className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">Expert Support</h3>
-                  <p className="text-gray-600">Connect with agricultural experts and farming community 24/7</p>
+                  <h3 className="font-heading font-semibold text-xl mb-3 text-gray-900">{t("whyBioBloom.expertSupport.title")}</h3>
+                  <p className="text-gray-600">{t("whyBioBloom.expertSupport.description")}</p>
                 </CardContent>
               </Card>
             </ScaleIn>
@@ -291,13 +285,13 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <Badge className="mb-4 bg-blue-100 text-blue-800 hover:bg-blue-200 text-sm px-4 py-2">
                 <Clock className="w-4 h-4 inline mr-2" />
-                Simple Process
+                {t("howItWorks.badge")}
               </Badge>
               <h2 className="font-heading font-bold text-4xl md:text-5xl text-gray-900 mb-6">
-                Get Started in 3 Easy Steps
+                {t("howItWorks.title")}
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Start your journey to smarter farming in minutes
+                {t("howItWorks.subtitle")}
               </p>
             </div>
           </FadeIn>
@@ -311,9 +305,9 @@ export default function HomePage() {
                 <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
                   <span className="text-3xl font-bold text-white">1</span>
                 </div>
-                <h3 className="font-heading font-semibold text-2xl mb-4 text-gray-900">Sign Up Free</h3>
+                <h3 className="font-heading font-semibold text-2xl mb-4 text-gray-900">{t("howItWorks.step1.title")}</h3>
                 <p className="text-gray-600 text-lg">
-                  Create your account in seconds. No credit card required, no hidden fees.
+                  {t("howItWorks.step1.description")}
                 </p>
               </div>
             </SlideUp>
@@ -323,9 +317,9 @@ export default function HomePage() {
                 <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
                   <span className="text-3xl font-bold text-white">2</span>
                 </div>
-                <h3 className="font-heading font-semibold text-2xl mb-4 text-gray-900">Add Your Farm</h3>
+                <h3 className="font-heading font-semibold text-2xl mb-4 text-gray-900">{t("howItWorks.step2.title")}</h3>
                 <p className="text-gray-600 text-lg">
-                  Tell us about your land, crops, and location. Our AI will personalize recommendations.
+                  {t("howItWorks.step2.description")}
                 </p>
               </div>
             </SlideUp>
@@ -335,9 +329,9 @@ export default function HomePage() {
                 <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
                   <span className="text-3xl font-bold text-white">3</span>
                 </div>
-                <h3 className="font-heading font-semibold text-2xl mb-4 text-gray-900">Start Growing</h3>
+                <h3 className="font-heading font-semibold text-2xl mb-4 text-gray-900">{t("howItWorks.step3.title")}</h3>
                 <p className="text-gray-600 text-lg">
-                  Get instant insights, predictions, and recommendations to boost your yields.
+                  {t("howItWorks.step3.description")}
                 </p>
               </div>
             </SlideUp>
@@ -347,7 +341,7 @@ export default function HomePage() {
             <div className="text-center mt-12">
               <NextLink href="/auth">
                 <Button size="lg" className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-10 py-5 text-lg transition-all duration-200 hover:scale-105 hover:shadow-xl">
-                  Start Your Free Trial
+                  {t("howItWorks.startTrial")}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </NextLink>
@@ -363,7 +357,7 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <Badge className="mb-4 bg-green-100 text-green-800 hover:bg-green-200 text-sm px-4 py-2">
                 <Sprout className="w-4 h-4 inline mr-2" />
-                Core Features
+                {t("common.features")}
               </Badge>
               <h2 className="font-heading font-bold text-4xl md:text-5xl text-gray-900 mb-6">{t("features.title")}</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">{t("features.subtitle")}</p>
@@ -436,13 +430,13 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <Badge className="mb-4 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 text-sm px-4 py-2">
                 <Star className="w-4 h-4 inline mr-2 fill-yellow-600" />
-                Success Stories
+                {t("testimonials.badge")}
               </Badge>
               <h2 className="font-heading font-bold text-4xl md:text-5xl text-gray-900 mb-6">
-                Trusted by Farmers Across India
+                {t("testimonials.title")}
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Real stories from farmers who transformed their agricultural practices
+                {t("testimonials.subtitle")}
               </p>
             </div>
           </FadeIn>
@@ -457,15 +451,15 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-gray-700 mb-6 italic leading-relaxed">
-                    "BioBloom's AI helped me increase my wheat yield by 42%. The crop rotation suggestions were perfect for my soil type. Game changer!"
+                    "{t("testimonials.review1.text")}"
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-lg">RK</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Rajesh Kumar</h4>
-                      <p className="text-sm text-gray-600">Punjab • 45 acres</p>
+                      <h4 className="font-semibold text-gray-900">{t("testimonials.review1.name")}</h4>
+                      <p className="text-sm text-gray-600">{t("testimonials.review1.location")}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -481,15 +475,15 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-gray-700 mb-6 italic leading-relaxed">
-                    "The pest predictor saved my entire cotton crop. Early warning system is incredibly accurate. Reduced pesticide use by 60%!"
+                    "{t("testimonials.review2.text")}"
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-lg">SP</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Sunita Patel</h4>
-                      <p className="text-sm text-gray-600">Gujarat • 30 acres</p>
+                      <h4 className="font-semibold text-gray-900">{t("testimonials.review2.name")}</h4>
+                      <p className="text-sm text-gray-600">{t("testimonials.review2.location")}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -505,15 +499,15 @@ export default function HomePage() {
                     ))}
                   </div>
                   <p className="text-gray-700 mb-6 italic leading-relaxed">
-                    "Finally, technology that understands Indian farming! The Hindi interface and local crop database make it so easy to use."
+                    "{t("testimonials.review3.text")}"
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full flex items-center justify-center">
                       <span className="text-white font-bold text-lg">MS</span>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Mahesh Singh</h4>
-                      <p className="text-sm text-gray-600">Uttar Pradesh • 25 acres</p>
+                      <h4 className="font-semibold text-gray-900">{t("testimonials.review3.name")}</h4>
+                      <p className="text-sm text-gray-600">{t("testimonials.review3.location")}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -538,7 +532,7 @@ export default function HomePage() {
             <FadeIn>
               <Badge className="mb-6 bg-green-600 text-white hover:bg-green-700 text-sm px-4 py-2">
                 <Zap className="w-4 h-4 inline mr-2" />
-                Limited Time Offer
+                {t("ctaBanner.badge")}
               </Badge>
             </FadeIn>
             <FadeIn delay={40}>
@@ -574,28 +568,28 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center justify-center gap-6 text-gray-400 text-sm">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300">Free 30-day trial</span>
+                  <span className="text-gray-300">{t("ctaBanner.freeTrial")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300">No credit card required</span>
+                  <span className="text-gray-300">{t("ctaBanner.noCreditCard")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-gray-300">24/7 support in Hindi</span>
+                  <span className="text-gray-300">{t("ctaBanner.support24x7")}</span>
                 </div>
               </div>
             </SlideUp>
 
             <ScaleIn delay={160}>
               <div className="mt-12 pt-8 border-t border-gray-700">
-                <p className="text-gray-400 mb-4">Trusted by over 10,000+ farmers across India</p>
+                <p className="text-gray-400 mb-4">{t("ctaBanner.trustedBy")}</p>
                 <div className="flex items-center justify-center gap-2">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
                   ))}
                   <span className="text-white font-semibold ml-2">4.9/5</span>
-                  <span className="text-gray-400 ml-1">(2,450 reviews)</span>
+                  <span className="text-gray-400 ml-1">{t("ctaBanner.reviews")}</span>
                 </div>
               </div>
             </ScaleIn>

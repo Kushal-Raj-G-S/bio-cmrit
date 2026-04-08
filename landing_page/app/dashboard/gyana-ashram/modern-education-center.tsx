@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Button, Progress, Tabs, TabsContent, TabsList, TabsTrigger } from './shared/ui-components'
 import { useAuth } from '@/context/auth-context'
+import { useTranslation } from '@/hooks/use-translation'
 import { useEducationDashboard } from '@/hooks/useEducationDashboard'
 import { CourseCard, CourseDetail } from './courses'
 import { DashboardStats, GamificationSection, AIRecommendations, CertificationBanner, ModernGamifiedDashboard } from './dashboard'
@@ -75,6 +76,7 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
   user = { name: 'Farmer', avatar: '', level: 5, points: 1250, streak: 7 }
 }) => {
   const { user: authUser, isAuthenticated } = useAuth()
+  const { t } = useTranslation()
   
   // Get live education data
   const { stats, loading: educationLoading } = useEducationDashboard(authUser?.id)
@@ -128,8 +130,8 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
                   <Wheat className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">Welcome back, {user.name}!</h1>
-                  <p className="text-green-100">Continue your farming mastery journey</p>
+                  <h1 className="text-2xl md:text-3xl font-bold">{t("gyanaAshram.hero.welcomeBack")}, {user.name}!</h1>
+                  <p className="text-green-100">{t("gyanaAshram.hero.subtitle")}</p>
                 </div>
               </div>
             </motion.div>
@@ -142,15 +144,15 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
             >
               <div className="text-center p-4 rounded-2xl bg-white/10 backdrop-blur-sm">
                 <div className="text-2xl font-bold">{user.level}</div>
-                <div className="text-sm text-green-100">Level</div>
+                <div className="text-sm text-green-100">{t("gyanaAshram.hero.level")}</div>
               </div>
               <div className="text-center p-4 rounded-2xl bg-white/10 backdrop-blur-sm">
                 <div className="text-2xl font-bold">{user.points.toLocaleString()}</div>
-                <div className="text-sm text-green-100">Points</div>
+                <div className="text-sm text-green-100">{t("gyanaAshram.hero.points")}</div>
               </div>
               <div className="text-center p-4 rounded-2xl bg-white/10 backdrop-blur-sm">
                 <div className="text-2xl font-bold">{user.streak}</div>
-                <div className="text-sm text-green-100">Day Streak</div>
+                <div className="text-sm text-green-100">{t("gyanaAshram.hero.dayStreak")}</div>
               </div>
             </motion.div>
 
@@ -165,7 +167,7 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
                 onClick={() => setActiveTab('courses')}
               >
                 <Play className="w-5 h-5 mr-2" />
-                Continue Learning
+                {t("gyanaAshram.hero.continueLearning")}
               </Button>
               <Button 
                 variant="outline" 
@@ -173,7 +175,7 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
                 onClick={() => setActiveTab('community')}
               >
                 <Users className="w-5 h-5 mr-2" />
-                Join Community
+                {t("gyanaAshram.hero.joinCommunity")}
               </Button>
             </motion.div>
           </div>
@@ -190,8 +192,8 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
                   <div className="w-16 h-16 rounded-2xl bg-white/20 mx-auto flex items-center justify-center">
                     <Brain className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="font-bold text-lg">AI-Powered Learning</h3>
-                  <p className="text-sm text-green-100">Personalized recommendations just for you</p>
+                  <h3 className="font-bold text-lg">{t("gyanaAshram.hero.aiPoweredLearning")}</h3>
+                  <p className="text-sm text-green-100">{t("gyanaAshram.hero.personalizedRec")}</p>
                 </div>
               </div>
             </div>
@@ -212,11 +214,11 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
         {/* Navigation moved to full left */}
         <nav className="hidden md:flex items-center gap-1 bg-gray-100 rounded-xl p-1">
           {[
-            { id: 'overview', label: 'Overview', icon: BarChart3 },
-            { id: 'courses', label: 'Courses', icon: BookOpen },
-            { id: 'paths', label: 'Learning Paths', icon: Target },
-            { id: 'community', label: 'Community', icon: Users },
-            { id: 'mobile', label: 'Mobile', icon: Smartphone }
+            { id: 'overview', label: t('gyanaAshram.nav.overview'), icon: BarChart3 },
+            { id: 'courses', label: t('gyanaAshram.nav.courses'), icon: BookOpen },
+            { id: 'paths', label: t('gyanaAshram.nav.learningPaths'), icon: Target },
+            { id: 'community', label: t('gyanaAshram.nav.community'), icon: Users },
+            { id: 'mobile', label: t('gyanaAshram.nav.mobile'), icon: Smartphone }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -239,7 +241,7 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search courses, topics..."
+              placeholder={t("gyanaAshram.courses.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2 w-64 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
@@ -275,11 +277,11 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
           >
             <div className="p-4 space-y-2">
               {[
-                { id: 'overview', label: 'Overview', icon: BarChart3 },
-                { id: 'courses', label: 'Courses', icon: BookOpen },
-                { id: 'paths', label: 'Learning Paths', icon: Target },
-                { id: 'community', label: 'Community', icon: Users },
-                { id: 'mobile', label: 'Mobile', icon: Smartphone }
+                { id: 'overview', label: t('gyanaAshram.nav.overview'), icon: BarChart3 },
+                { id: 'courses', label: t('gyanaAshram.nav.courses'), icon: BookOpen },
+                { id: 'paths', label: t('gyanaAshram.nav.learningPaths'), icon: Target },
+                { id: 'community', label: t('gyanaAshram.nav.community'), icon: Users },
+                { id: 'mobile', label: t('gyanaAshram.nav.mobile'), icon: Smartphone }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -314,36 +316,36 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
     >
       {[
         { 
-          label: 'Courses Completed', 
+          label: t('gyanaAshram.stats.coursesCompleted'), 
           value: stats?.coursesCompleted || 0, 
           icon: CheckCircle, 
           color: 'text-green-600',
           bg: 'bg-green-50',
-          change: '+2 this week'
+          change: `+2 ${t('gyanaAshram.stats.thisWeek')}`
         },
         { 
-          label: 'Study Hours', 
+          label: t('gyanaAshram.stats.studyHours'), 
           value: `${stats?.profile?.totalStudyHours || 0}h`, 
           icon: Clock, 
           color: 'text-blue-600',
           bg: 'bg-blue-50',
-          change: '+5h this week'
+          change: `+5h ${t('gyanaAshram.stats.thisWeek')}`
         },
         { 
-          label: 'Current Streak', 
-          value: `${stats?.profile?.streak || 0} days`, 
+          label: t('gyanaAshram.stats.currentStreak'), 
+          value: `${stats?.profile?.streak || 0} ${t('gyanaAshram.stats.days')}`, 
           icon: Zap, 
           color: 'text-orange-600',
           bg: 'bg-orange-50',
-          change: 'Keep it up!'
+          change: t('gyanaAshram.stats.keepItUp')
         },
         { 
-          label: 'Certificates', 
+          label: t('gyanaAshram.stats.certificates'), 
           value: stats?.profile?.certificates || 0, 
           icon: Award, 
           color: 'text-purple-600',
           bg: 'bg-purple-50',
-          change: '1 pending'
+          change: `1 ${t('gyanaAshram.stats.pending')}`
         }
       ].map((stat, index) => (
         <motion.div
@@ -388,10 +390,10 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
             <div className="relative z-10 flex items-start justify-between gap-4">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 text-xs font-semibold uppercase tracking-wide">
-                  <Wheat className="h-3.5 w-3.5" /> Learning Companion
+                  <Wheat className="h-3.5 w-3.5" /> {t("gyanaAshram.banner.learningCompanion")}
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">GyanaAshram</h1>
-                <p className="text-indigo-100 text-sm font-semibold italic">Learn Daily. Apply Better Practices. Grow With Confidence.</p>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t("gyanaAshram.banner.title")}</h1>
+                <p className="text-indigo-100 text-sm font-semibold italic">{t("gyanaAshram.banner.tagline")}</p>
               </div>
             </div>
           </div>
@@ -420,14 +422,14 @@ export const ModernEducationCenter: React.FC<ModernEducationCenterProps> = ({
                         className="w-fit"
                       >
                         <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
-                        Back to Courses
+                        {t("gyanaAshram.courses.backToCourses")}
                       </Button>
                       <CourseDetail courseId={selectedCourse.id} onBack={() => setSelectedCourse(null)} />
                     </>
                   ) : (
                     <>
                       <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-bold text-gray-800">Your Courses</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{t("gyanaAshram.courses.yourCourses")}</h2>
                         <div className="flex items-center gap-2">
                           <Button 
                             variant="ghost" 
