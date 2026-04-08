@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+httpx
+pydantic>=2
+pydantic-settings
+loguru
+chromadb
+numpy
+python-dotenv
+pytest

@@ -1,0 +1,349 @@
+1. Macro architecture: subsystems
+Think of the system as 6 subsystems:
+
+Data & Indexing Subsystem – how raw PDFs and your rotations catalog become queryable.
+
+Retrieval Subsystem – hybrid search + reranking over both corpus and catalog.
+
+Reasoning Subsystem – LLM routing, safety, Hindi explainer, and optimization logic.
+
+Serving Subsystem – FastAPI gateway, auth, rate limiting, multi‑tenant support.
+
+Evaluation & CI/CD Subsystem – golden sets, automated RAG eval, and quality gates.
+
+Observability Subsystem – logs, traces, dashboards, and drift/hallucination monitoring.
+
+You already did (3) pretty well; we’ll thicken (1), (2), (5), (6).
+
+2. Repo layout: bodybuilder version
+text
+krishichakra-backend/
+  app/
+    api/
+      v1/
+        crop_plan.py           # main endpoint
+        health.py
+        admin.py               # trigger reindex, see stats
+    core/
+      config.py                # settings via Pydantic BaseSettings
+      logging.py               # structlog / loguru config
+      security.py              # API keys, rate limit helpers
+      errors.py                # custom exceptions
+    domain/
+      models.py                # domain objects (Field, Rotation, Plan, SourceChunk)
+      scoring.py               # profit, soil, water, risk scoring
+    rag/
+      ingestion/
+        pdf_extractor.py       # pdf -> pages
+        chunker.py             # paragraphs -> chunks
+        tagger.py              # crop/soil/zone tagging
+        rotations_builder.py   # build rotations_catalog.jsonl from curated data
+        pipelines.py           # CLI tasks to run full build
+      index/
+        vector_store.py        # interface
+        chroma_store.py        # impl
+        keyword_store.py       # BM25 / Postgres FTS
+      retrieval/
+        query_builder.py       # build queries from FieldMetadata
+        hybrid_retriever.py    # dense + sparse
+        reranker.py            # cross-encoder rerank
+      llm/
+        client.py              # your fallback stack
+        prompts.py             # system/user templates
+        plan_constructor.py    # calls LLM to generate plan JSON
+        hindi_explainer.py
+        safety_client.py
+    services/
+      crop_planner.py          # orchestrates retrieval + reasoning
+      feedback.py              # store thumbs up/down, comments
+    telemetry/
+      tracing.py               # OpenTelemetry wrappers
+      metrics.py               # Prometheus/Grafana counters
+      eval_logging.py          # RAG eval traces to a separate DB
+  data/
+    corpus_raw/                # original PDFs
+    corpus_chunks.jsonl
+    rotations_catalog.jsonl
+  scripts/
+    build_all.py               # rebuild corpus + index + catalog
+    eval_offline.py            # run evaluation suite on golden set
+  tests/
+    unit/
+    integration/
+    eval/
+  infra/
+    docker-compose.yml
+    k8s/
+3. Data & indexing subsystem (thick version)
+3.1 Ingestion pipeline
+Pipeline stages (each a pure function + CLI entrypoint):
+
+PDF extraction
+
+Use pdfminer / pymupdf to extract pages with layout; keep headings and tables where possible.
+
+Chunking
+
+Paragraph-based with:
+
+Target 800–1200 chars, hard max 1500.
+
+Don’t split table rows or bullet lists.
+
+Tagging (NLP + rules)
+
+Use spaCy/HF NER + your own regex to tag:
+
+Crops (normalized IDs: RICE_IRRIGATED, SORGHUM_RAINFED).
+
+Soil types.
+
+Seasons (Kharif/Rabi/Zaid).
+
+Zones/states.
+
+Add manual overrides for the top 50 high‑value pages.
+
+You end up with corpus_chunks.jsonl as described earlier. Version this with a schema version field.
+
+3.2 Indexing
+Dense index: embeddings via your NVIDIA + MiniLM fallback chain; store in Chroma/Qdrant.
+
+Sparse index:
+
+Either BM25 via elasticsearch-lite or Whoosh,
+
+Or, simpler: Postgres tsvector over text + crop_mentions and call that from Python.
+
+Rotations catalog:
+
+Treated as its own “micro‑corpus”:
+
+Dense index for similarity (current crop + soil + irrigation).
+
+Also simple SQL table with columns for zone, soil, irrigation, base_crop for exact filtering.
+
+Expose all of this through a VectorStore and KeywordStore interface so you can swap implementations without touching business logic.
+
+4. Retrieval subsystem: full pipeline
+4.1 Query builder (beefed up)
+build_retrieval_query(field: FieldMetadata) -> RetrievalQuery
+
+natural_query:
+"3-year crop rotation for red loam soil in Southern Karnataka, sprinkler irrigated, current crop barley, Rabi season, break cycle for leaf blight and nutrient depletion."
+
+filters:
+
+zone in [Southern_Karnataka, Karnataka]
+
+soil in [Red_loam]
+
+crop_mentions contains ['Barley', 'Chickpea', 'Finger_millet', 'Sunflower'] (if farmer has preferences)
+
+system_type != ['Monocropping']
+
+hard_constraints:
+
+disallow crops flagged by disease (e.g., avoid leaf‑blight susceptible cereals for Year‑1).
+
+This object is re‑used for both corpus and catalog retrieval.
+
+4.2 Hybrid retrieval + reranker (serious version)
+Implementation pattern directly in line with hybrid+cross‑encoder best practices:
+
+Dense retrieval (bi‑encoder)
+
+vector search on full corpus: top 40 chunks.
+
+Sparse retrieval (BM25/FTS)
+
+keyword search on text: top 40 chunks.
+
+Merge & scoring
+
+Union by id.
+
+For each chunk:
+
+score = 0.6 * dense_score_norm + 0.4 * sparse_score_norm.
+
+Cross‑encoder reranking
+
+Take top 40 by combined score.
+
+Run a cross‑encoder (e.g., ms-marco-MiniLM-L12) on (query, chunk_text) pairs.
+
+Get rerank score, reorder, take top 8.
+
+Same pattern applied to rotations_catalog, but with:
+
+Strict filters for zone/soil/irrigation/current crop.
+
+Smaller K (dense top 10 + sparse top 10 → rerank top 5).
+
+This is your “lats and back” of the bodybuilder: it’s what separates toy RAG from serious retrieval.
+
+5. Reasoning subsystem: more muscle & control
+5.1 Domain scoring before LLM
+Before calling the LLM, you pre‑score candidate rotations:
+
+score_rotation(rotation, field, market_data, rainfall_forecast) -> RotationScore
+
+Compute:
+
+profit_score – normalized expected 3‑year gross margin band using:
+
+median yields from literature,
+
+price distributions (you can hardcode for now, wire to an API later).
+
+soil_health_score – based on:
+
+legume years present,
+
+crop family diversity,
+
+root depth diversity,
+
+use of green manures.
+
+water_risk_score – function of:
+
+total irrigation requirement vs local water reliability,
+
+rainfall forecast class.
+
+pest_break_score – whether sequence breaks primary pest/disease cycles from input.
+
+farmer_preference_score – if farmer gives “no tobacco”, “prefers pulses”, etc.
+
+You then feed the top 3–5 scored candidates into the LLM and tell it:
+
+“You must choose 1–3 rotation plans and justify trade‑offs given these scores and the evidence chunks.”
+
+So the LLM is doing multi‑criteria reasoning on top of your deterministic engine, not inventing rotations from scratch.
+
+5.2 Two‑stage generation
+Plan JSON stage
+
+Ultra chain: get only JSON with exact schema.
+
+If you want full bodybuilder: add LLM‑as‑judge self‑check:
+
+After plan is produced, call a lightweight model to verify:
+
+Are all crops supported by at least one evidence chunk?
+
+Are there obvious agronomic contradictions?
+
+If fail → either auto‑retry with different samples or downgrade confidence.
+
+Narrative stage (HTML/text)
+
+Fast chain: convert JSON + evidence into narratives in English (for UI) and Hindi (your existing explainer).
+
+This lets you re‑phrase without touching the core JSON.
+
+6. Serving subsystem: API + multi‑tenant hardening
+Even if hackathon, design like it’ll be reused:
+
+API:
+
+POST /api/v1/crop-plan – main.
+
+GET /api/v1/sources/{plan_id} – fetch chunks and PDFs behind a plan.
+
+POST /api/v1/feedback – thumbs up/down, 1–5 rating, comment.
+
+GET /api/v1/metrics/summary – basic dashboard for judges.
+
+Auth:
+
+Simple API key header or JWT, but structure code so you can drop it if not needed in demo.
+
+Rate limiting:
+
+In‑memory limiter (per IP/field) so you don’t DDOS your NIM key on demo day.
+
+7. Evaluation & CI/CD subsystem (this is what blows judges’ minds)
+You don’t just “hope” it works; you show tests.
+
+7.1 Golden dataset
+Build a small but sharp golden set:
+
+30–50 real/pseudo‑real fields:
+
+mix of crops, soils, irrigated/rainfed, zones.
+
+For each: a “reference” 3‑year rotation (derived from ICAR tables or experts).
+
+Store as eval/golden_crop_plan.jsonl.
+
+7.2 Metrics you track
+Use standard RAG metrics, not vague claims:
+
+Retrieval:
+
+context_precision@k – proportion of retrieved chunks actually containing relevant info.
+
+context_recall@k – did retrieval capture all gold supporting docs?
+
+Answer/plan:
+
+Faithfulness / groundedness – are all claims supported by retrieved context?
+
+Relevance – does the plan answer the field’s problem?
+
+Rotation quality – domain metric:
+
+legume presence,
+
+no same crop family repeated 3 years,
+
+water balance acceptable.
+
+Automate these with LLM‑as‑judge + some hard agronomic rules. Use something like RAGAS/DeepEval style pipeline, but keep it minimal.
+
+7.3 CI/CD gate
+On each PR:
+
+Run unit + integration tests.
+
+Run RAG eval on golden set (maybe only on a subset).
+
+Fail pipeline if:
+
+Retrieval precision drops below threshold.
+
+Faithfulness score drops below e.g. 0.8.
+
+Domain rotation quality violations increase.
+
+This is “bodybuilder” level discipline; practically no hackathon team will have this.
+
+8. Observability subsystem: see every muscle move
+Borrow patterns from modern AI observability guides:
+
+Logs:
+
+Structured logs per request: request id, engine used, top chunk ids, latency per stage.
+
+Metrics (Prometheus):
+
+rag_request_latency_seconds{stage="retrieval"}.
+
+rag_retrieval_zero_hit_total.
+
+rag_fallback_model_count{model="devstral"}.
+
+rag_answer_faithfulness_score_bucket.
+
+Traces (OpenTelemetry):
+
+Span for: ingestion → retrieval → rerank → LLM → post‑processing.
+
+Dashboards (Grafana/LangSmith/etc.):
+
+p95 latency, model usage, hallucination rate, NIM cost per day.
+
+Even in a hackathon, you can show a simple Grafana board or just logs + a small HTML dashboard. Judges eat this up because it screams “production mindset”

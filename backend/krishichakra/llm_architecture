@@ -1,0 +1,37 @@
+Final LLM Architecture — KrishiChakra RAG System
+1. Embeddings (Chroma)
+Priority	Model	Notes
+Primary	nvidia/llama-nemotron-embed-vl-1b-v2	~1.92s, multimodal-ready
+Secondary	nvidia/llama-nemotron-embed-1b-v2	~2.54s
+________________________________________
+2. Crop Plan Generator (English)
+python
+ENGINES = {
+    "fast": [
+        ("nvidia/llama-3.3-nemotron-super-49b-v1_5", 45),
+        ("meta/llama-3.3-70b-instruct",               20),
+        ("mistralai/devstral-2-123b-instruct-2512",   50),
+        ("nvidia/nemotron-3-nano-30b-a3b",             20),  # hard stop
+    ],
+    "ultra": [
+        ("nvidia/llama-3_1-nemotron-ultra-253b-v1",   45),  # [thinking]
+        ("minimaxai/minimax-m2.5",                     35),
+        ("mistralai/devstral-2-123b-instruct-2512",   50),
+        ("nvidia/llama-3.3-nemotron-super-49b-v1_5",  40),
+        ("meta/llama-3.3-70b-instruct",               20),  # hard stop
+    ]
+}
+________________________________________
+3. Hindi/Hinglish Explainer
+Priority	Model	Notes
+Primary	nvidia/nemotron-4-mini-hindi-4b-instruct	TTFT ~4s, total ~15s
+Secondary	meta/llama-3.3-70b-instruct	Prompt in Hindi if primary fails
+________________________________________
+4. Safety / Guardrail
+Model	Latency	Notes
+nvidia/llama-3_1-nemotron-safety-guard-8b-v3	~1s	Single model, no fallback needed
+
+Thinking Models Summary
+Only one formal thinking model in your entire stack:
+•	nvidia/llama-3_1-nemotron-ultra-253b-v1 [thinking] — requires "system_prompt": "detailed thinking on" and response stripping at main.py:188
+Everything else is standard autoregressive. You're clean. Lock it.

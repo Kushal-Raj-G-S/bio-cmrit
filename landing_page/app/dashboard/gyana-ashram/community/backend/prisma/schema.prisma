@@ -1,0 +1,228 @@
+// Community Hub Database Schema - SEPARATE from main GrainTrust database
+// Location: src/components/education/community/backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("COMMUNITY_DATABASE_URL")
+}
+
+// User model for Community Hub (separate from main farmer users)
+model CommunityUser {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String   @unique
+  firstName   String
+  lastName    String
+  avatar      String?
+  bio         String?
+  
+  // Farming specific fields
+  farmName    String?
+  farmSize    String?  // "Small", "Medium", "Large"
+  farmType    String?  // "Organic", "Traditional", "Mixed"
+  location    String?
+  experience  String   @default("Beginner") // "Beginner", "Intermediate", "Expert"
+  specialties String[] // Array of crop specialties
+  
+  // Authentication
+  passwordHash String
+  emailVerified Boolean @default(false)
+  verificationToken String?
+  resetToken     String?
+  resetTokenExpiry DateTime?
+  
+  // Community stats
+  reputation  Int      @default(0)
+  level       Int      @default(1)
+  badges      String[] // Array of earned badges
+  isVerified  Boolean  @default(false)
+  isModerator Boolean  @default(false)
+  isExpert    Boolean  @default(false)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastActive  DateTime @default(now())
+  
+  // Relations
+  questions   Question[]
+  comments    Comment[]
+  votes       Vote[]
+  followers   Follow[] @relation("UserFollowers")
+  following   Follow[] @relation("UserFollowing")
+  notifications Notification[]
+  
+  @@map("community_users")
+}
+
+// Categories for organizing questions
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String
+  icon        String
+  color       String
+  order       Int        @default(0)
+  isActive    Boolean    @default(true)
+  
+  // Timestamps
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relations
+  questions   Question[]
+  
+  @@map("categories")
+}
+
+// Questions posted by community members
+model Question {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  tags        String[]
+  images      String[] // URLs to uploaded images
+  
+  // Question metadata
+  isUrgent    Boolean  @default(false)
+  isAnonymous Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  isSolved    Boolean  @default(false)
+  
+  // Location for context
+  location    String?
+  
+  // Stats
+  viewCount   Int      @default(0)
+  voteScore   Int      @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  authorId    String
+  author      CommunityUser @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category      @relation(fields: [categoryId], references: [id])
+  comments    Comment[]
+  votes       Vote[]
+  
+  @@map("questions")
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@index([voteScore])
+}
+
+// Comments on questions
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  images      String[] // URLs to uploaded images
+  
+  // Comment metadata
+  isAccepted  Boolean  @default(false) // For marking as solution
+  isByExpert  Boolean  @default(false)
+  
+  // Stats
+  voteScore   Int      @default(0)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  authorId    String
+  author      CommunityUser @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  parentId    String?       // For nested replies
+  parent      Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[]     @relation("CommentReplies")
+  votes       Vote[]
+  
+  @@map("comments")
+  @@index([authorId])
+  @@index([questionId])
+  @@index([createdAt])
+}
+
+// Voting system for questions and comments
+model Vote {
+  id         String    @id @default(cuid())
+  type       VoteType  // UP, DOWN
+  
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  
+  // Relations
+  userId     String
+  user       CommunityUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionId String?
+  question   Question?     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  commentId  String?
+  comment    Comment?      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, questionId])
+  @@unique([userId, commentId])
+  @@map("votes")
+}
+
+// User following system
+model Follow {
+  id          String        @id @default(cuid())
+  
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  
+  // Relations
+  followerId  String
+  follower    CommunityUser @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   CommunityUser @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+// Notification system
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?            // Additional data for the notification
+  isRead    Boolean          @default(false)
+  
+  // Timestamps
+  createdAt DateTime         @default(now())
+  
+  // Relations
+  userId    String
+  user      CommunityUser    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+  @@index([userId, isRead])
+}
+
+// Enums
+enum VoteType {
+  UP
+  DOWN
+}
+
+enum NotificationType {
+  NEW_COMMENT
+  QUESTION_SOLVED
+  NEW_FOLLOWER
+  EXPERT_REPLY
+  UPVOTE_MILESTONE
+  BADGE_EARNED
+  SYSTEM_ALERT
+}

@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  backend:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ..:/app
+    command: sh -c "pip install -r infra/requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 9000 --reload"
+    ports:
+      - "9000:9000"
+
+# TODO: add Qdrant/Chroma containers here

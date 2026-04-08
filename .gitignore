@@ -1,53 +1,42 @@
-# Node / Next.js
-**/node_modules/
-**/.next/
-**/out/
-**/dist/
-**/coverage/
+# Ignore everything by default
+/*
 
-# Python
-**/__pycache__/
-**/*.pyc
-**/.pytest_cache/
-**/.mypy_cache/
-**/venv/
-**/.venv/
+# Keep only these two folders and this ignore file
+!/.gitignore
+!/backend/
+!/backend/**
+!/landing_page/
+!/landing_page/**
 
-# Env / secrets
-**/.env
-**/.env.*
-!**/.env.example
+# Python cache/virtualenv inside allowed folders
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/.pytest_cache/
+backend/**/.mypy_cache/
+backend/**/venv/
+backend/**/.venv/
 
-# Logs
-**/*.log
+# Node/build artifacts inside allowed folders
+landing_page/**/node_modules/
+landing_page/**/.next/
+landing_page/**/out/
+landing_page/**/dist/
+landing_page/**/coverage/
+landing_page/**/*.tsbuildinfo
 
-# IDE / OS
+# Env/log files inside allowed folders
+backend/**/.env
+backend/**/.env.*
+!backend/**/.env.example
+landing_page/**/.env
+landing_page/**/.env.*
+!landing_page/**/.env.example
+backend/**/*.log
+landing_page/**/*.log
+
+# IDE/system files
 **/.vscode/
 **/.idea/
 **/.DS_Store
 Thumbs.db
-
-# Git internals accidentally copied
 **/.git_embedded_backup/
-
-# Misc generated files
-**/*.tsbuildinfo
-
-# Large datasets / model artifacts (skip for initial push)
-datasets/
-models_export/
-krishiausadh/20+ unchanged/
-Data for Identification of Plant Leaf Diseases Using a 9-layer Deep Convolutional Neural Network/
-Plant_leaf_diseases_dataset_with_augmentation/
-Plant_leave_diseases_dataset_without_augmentation/
-krishichakra/vector_store/
-main_backend/krishichakra/vector_store/
-
-# Common ML artifact formats
-**/*.pt
-**/*.pth
-**/*.h5
-**/*.ckpt
-**/*.onnx
-**/*.joblib
-**/*.pkl
